@@ -1,0 +1,27 @@
+{
+  "name": "patch-tuesday",
+  "version": "1.0.0",
+  "description": "PATCH TUESDAY: a push-your-luck party game about deploying to prod",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p . && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "typecheck": "tsc -p .",
+    "e2e": "node e2e/full-game.cjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/qrcode": "^1.5.6",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "morphdom": "^2.7.8",
+    "qrcode": "^1.5.4"
+  },
+  "private": true,
+  "type": "module"
+}

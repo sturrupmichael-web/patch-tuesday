@@ -1,0 +1,100 @@
+:root {
+  --bg: #070b09;
+  --panel: #0e1512;
+  --panel2: #131d18;
+  --line: #1f3329;
+  --text: #d9ffe6;
+  --muted: #6f8f7c;
+  --green: #39ff88;
+  --amber: #ffb000;
+  --red: #ff3b3b;
+  --blue: #4ea8ff;
+  --mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+}
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 2px solid var(--green);
+  background: var(--green);
+  color: #04130a;
+  border-radius: 10px;
+  padding: 0.5em 1em;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+button.ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--line);
+}
+.muted {
+  color: var(--muted);
+}
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 1.8em;
+  height: 1.8em;
+  font-size: calc(1em * var(--s, 1));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--c) 25%, transparent);
+  border: 2px solid var(--c);
+  flex: none;
+}
+.chip {
+  --size: 2.2em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1em;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: var(--chip);
+  color: #111;
+  font-family: var(--mono);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(0, 0, 0, 0.4);
+  position: relative;
+  flex: none;
+}
+.chip b {
+  font-size: 0.95em;
+}
+.chip i {
+  font-style: normal;
+  font-size: 0.7em;
+}
+.chip-shadowit {
+  color: #eee;
+}
+.chip.sm {
+  --size: 1.9em;
+  font-size: 0.85em;
+}
+.chip.xs {
+  --size: 1.6em;
+  font-size: 0.7em;
+}
+.chip.sm i,
+.chip.xs i {
+  display: none;
+}
+.chip-bug {
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25), 0 0 0 2px var(--red);
+}
