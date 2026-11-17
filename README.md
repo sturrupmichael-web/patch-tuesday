@@ -63,7 +63,7 @@ No database tables are needed; the game only uses Realtime **broadcast**.
 
 1. Create a project at [supabase.com](https://supabase.com) (the free tier is fine).
 2. In **Project Settings → API**, copy the project URL and the **anon / publishable** key.
-3. Copy `.env.example` to `.env.local` and fill them in:
+3. Put them in `.env` (committed, used by the deploy) or `.env.local` (local override):
 
    ```bash
    VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
@@ -79,20 +79,22 @@ put a `service_role` key here.
 
 ## Deploying under `/patch-tuesday/`
 
-The Vite `base` is `/patch-tuesday/` (override with `VITE_BASE=/other/ npm run build`).
+The site deploys itself, the same way League Night does. `sturrupmichael-web.github.io`
+uses the `michaelsturrup.com` domain, so this repo's GitHub Pages site is served at
+**https://michaelsturrup.com/patch-tuesday/** (phone join screen) and
+**https://michaelsturrup.com/patch-tuesday/host/** (host screen).
 
-```bash
-VITE_SUPABASE_URL=... VITE_SUPABASE_ANON_KEY=... npm run build
-```
+- One-time setup: in this repo, **Settings → Pages → Source: GitHub Actions**.
+- Every push to `main` runs **Tests**; when they pass, **Deploy** (`.github/workflows/deploy.yml`)
+  builds that commit and publishes `dist/` to Pages. You can also run Deploy by hand from the Actions tab.
+- The build reads the Supabase URL and publishable key from the committed `.env`
+  (they are public by design). `.env.local` overrides them locally and is git-ignored.
+- The game is **unlisted**: it isn't in the site's `games.json`, and both pages carry
+  `<meta name="robots" content="noindex">`. To launch it, add an entry to `games.json` in
+  `sturrupmichael-web.github.io` and remove the noindex tags.
 
-Upload the contents of `dist/` to the `patch-tuesday/` folder of the site, so you get:
-
-- `michaelsturrup.com/patch-tuesday/` → phone join screen (`dist/index.html`)
-- `michaelsturrup.com/patch-tuesday/host/` → host screen (`dist/host/index.html`)
-
-Most static hosts (Netlify, Vercel, Cloudflare Pages, S3/CloudFront, nginx)
-serve `/patch-tuesday/host` as `/patch-tuesday/host/index.html` automatically
-or redirect to the trailing-slash URL. No SPA rewrites are needed.
+To host it somewhere else instead, run `npm run build` (set `VITE_BASE` if the path
+isn't `/patch-tuesday/`) and upload `dist/`.
 
 ## Architecture
 
