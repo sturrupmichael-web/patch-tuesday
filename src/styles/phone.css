@@ -9,7 +9,7 @@ body {
 }
 body {
   background:
-    radial-gradient(ellipse at top, rgba(57, 255, 136, 0.08), transparent 70%),
+    radial-gradient(ellipse at top, rgba(245, 185, 66, 0.08), transparent 70%),
     var(--bg);
 }
 #app {
@@ -40,7 +40,7 @@ h2 {
   font-weight: 800;
   font-size: 30px;
   color: var(--green);
-  text-shadow: 0 0 14px rgba(57, 255, 136, 0.5);
+  text-shadow: 0 0 14px rgba(245, 185, 66, 0.5);
   text-align: center;
 }
 .logo span {
@@ -149,11 +149,11 @@ input:focus {
   font-weight: 700;
 }
 .memo-sm {
-  background: #f3efe2;
+  background: radial-gradient(ellipse at center, #f6e7c4, #e2c891);
   color: #1e1e1e;
   padding: 18px;
   border-radius: 4px;
-  font-family: 'Courier New', var(--mono);
+  font-family: Georgia, 'Times New Roman', serif;
   transform: rotate(-1deg);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
@@ -234,21 +234,21 @@ input:focus {
 .deploy-btn {
   flex: 1;
   min-height: 180px;
-  font-size: 46px;
+  font-size: 44px;
   font-family: var(--mono);
   border-radius: 28px;
-  box-shadow: 0 8px 0 #1a9c4f, 0 0 40px rgba(57, 255, 136, 0.3);
+  box-shadow: 0 8px 0 #4f8f4a, 0 0 40px rgba(143, 227, 136, 0.3);
   touch-action: manipulation;
   user-select: none;
 }
 .deploy-btn:active {
   transform: translateY(6px);
-  box-shadow: 0 2px 0 #1a9c4f;
+  box-shadow: 0 2px 0 #4f8f4a;
 }
 .deploy.hot .deploy-btn {
   background: var(--amber);
   border-color: var(--amber);
-  box-shadow: 0 8px 0 #a36f00, 0 0 40px rgba(255, 176, 0, 0.4);
+  box-shadow: 0 8px 0 #a3501a, 0 0 40px rgba(255, 140, 60, 0.4);
 }
 .row2 {
   display: flex;

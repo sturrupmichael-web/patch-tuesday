@@ -169,13 +169,13 @@ describe('Rollback', () => {
     let g = deployedState(deploying(), 0, [['bug', 1]]);
     g = reduce(g, { type: 'rollback', seat: 0 });
     g = deployedState(g, 0, [['bug', 1]]);
-    expect(tryReduce(g, { type: 'rollback', seat: 0 }).error).toMatch(/charged/);
+    expect(tryReduce(g, { type: 'rollback', seat: 0 }).error).toMatch(/Ladle/);
   });
 
   it('cannot roll back a non-Bug', () => {
     let g = setPile(deploying(), 0, [chip('script', 1), chip('script', 1)]);
     g = draw(g);
-    expect(tryReduce(g, { type: 'rollback', seat: 0 }).error).toMatch(/Bug/);
+    expect(tryReduce(g, { type: 'rollback', seat: 0 }).error).toMatch(/Brimstone/);
   });
 
   it('recharging costs 3 Coffee in the Vendor Portal', () => {
@@ -267,7 +267,7 @@ describe('change effects', () => {
     while (!g.players[0].deployed.some((d) => d.type === 'logreview')) g = draw(g);
     const p = g.players[0];
     expect(p.pendingLogReview!.length).toBe(Math.min(2, 4 - p.deployed.length));
-    expect(tryReduce(g, { type: 'draw', seat: 0 }).error).toMatch(/Log Review/);
+    expect(tryReduce(g, { type: 'draw', seat: 0 }).error).toMatch(/Owl Feather/);
     const after = reduce(g, { type: 'logReviewPick', seat: 0, index: null });
     expect(after.players[0].pendingLogReview).toBeNull();
     expect(after.players[0].pile.length).toBe(p.pile.length + p.pendingLogReview!.length);
@@ -277,8 +277,8 @@ describe('change effects', () => {
     let g = deployedState(deploying(), 0, [['hotfix', 1], ['script', 1], ['script', 1]]);
     g = deployedState(g, 1, [['script', 1], ['hotfix', 1], ['script', 1]]);
     g = toReview(g);
-    expect(g.players[0].summary!.lines.some((l) => l.includes('Hotfix'))).toBe(false);
-    expect(g.players[1].summary!.lines.some((l) => l.includes('Hotfix'))).toBe(true);
+    expect(g.players[0].summary!.lines.some((l) => l.includes('Dewleaf'))).toBe(false);
+    expect(g.players[1].summary!.lines.some((l) => l.includes('Dewleaf'))).toBe(true);
   });
 
   it('Shadow IT: beat one neighbor = +1 space; beat both = +1 space +1 Coffee', () => {
@@ -298,7 +298,7 @@ describe('change effects', () => {
     h = deployedState(h, 2, [['script', 1]]);
     h = toReview(h);
     expect(h.players[0].position).toBe(3);
-    expect(h.players[0].summary!.lines.join()).toMatch(/\+1 ☕/);
+    expect(h.players[0].summary!.lines.join()).toMatch(/\+1 💎/);
   });
 
   it('Exec Sponsor: 1 / 2 / 3+ deployed', () => {
@@ -311,11 +311,11 @@ describe('change effects', () => {
       return toReview(g);
     };
     const one = run(1).players[0];
-    expect(one.summary!.lines.join()).toMatch(/Exec Sponsor: \+1 UP/);
+    expect(one.summary!.lines.join()).toMatch(/Starbloom: \+1 ★/);
     const two = run(2).players[0];
-    expect(two.summary!.lines.join()).toMatch(/\+1 UP, \+1 ☕/);
+    expect(two.summary!.lines.join()).toMatch(/\+1 ★, \+1 💎/);
     const three = run(3).players[0];
-    expect(three.summary!.lines.join()).toMatch(/\+2 UP and a free Script/);
+    expect(three.summary!.lines.join()).toMatch(/\+2 ★ and a free Carrot/);
     expect(three.backlog.filter((c) => c.type === 'script').length).toBe(2);
   });
 
@@ -394,7 +394,7 @@ describe('scoring (Post-Incident Review)', () => {
     let g = deploying();
     g = deployedState(g, 0, [['script', coffeeSpace]]);
     g = toReview(g);
-    expect(g.players[0].summary!.lines.join()).toMatch(/Coffee space/);
+    expect(g.players[0].summary!.lines.join()).toMatch(/Moonstone space/);
   });
 
   it('positions cap at the end of the pipeline', () => {
@@ -452,7 +452,7 @@ describe('Vendor Portal validation', () => {
   it('rejects unaffordable, wrong size, Bugs, duplicates and a third purchase', () => {
     let g = vendor();
     g.players[0].budget = 8;
-    expect(validateBuy(g, 0, 'logreview', 4)).toMatch(/Budget/);
+    expect(validateBuy(g, 0, 'logreview', 4)).toMatch(/Silver/);
     expect(validateBuy(g, 0, 'script', 2)).toMatch(/size/);
     expect(validateBuy(g, 0, 'bug', 1)).toBeTruthy();
     g = reduce(g, { type: 'buy', seat: 0, changeType: 'script', value: 1 });

@@ -5,8 +5,12 @@ body {
   font-size: clamp(14px, 1.05vw, 22px);
   overflow-x: hidden;
   background:
-    radial-gradient(ellipse at top, rgba(57, 255, 136, 0.06), transparent 60%),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0 2px, transparent 2px 4px),
+    radial-gradient(ellipse at top, rgba(245, 185, 66, 0.06), transparent 60%),
+    radial-gradient(1px 1px at 12% 18%, #fff8 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 9%, #fff6 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 44% 6%, #fff7 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 30%, #fff5 50%, transparent 51%),
+    radial-gradient(ellipse at bottom, rgba(255, 90, 60, 0.12), transparent 55%),
     var(--bg);
 }
 body.alert::after {
@@ -61,7 +65,7 @@ body.shake #app {
   font-weight: 800;
   font-size: 1.5em;
   color: var(--green);
-  text-shadow: 0 0 12px rgba(57, 255, 136, 0.5);
+  text-shadow: 0 0 12px rgba(245, 185, 66, 0.5);
 }
 .brand span {
   animation: blink 1s steps(2) infinite;
@@ -130,7 +134,7 @@ body.shake #app {
   font-size: clamp(80px, 11vw, 220px);
   letter-spacing: 0.12em;
   color: var(--amber);
-  text-shadow: 0 0 30px rgba(255, 176, 0, 0.45);
+  text-shadow: 0 0 30px rgba(255, 140, 60, 0.45);
   line-height: 1.1;
 }
 .qr svg {
@@ -221,7 +225,7 @@ select {
   font-size: 1.6em;
   padding: 0.6em 1.4em;
   font-family: var(--mono);
-  box-shadow: 0 0 30px rgba(57, 255, 136, 0.35);
+  box-shadow: 0 0 30px rgba(245, 185, 66, 0.35);
 }
 
 /* Board */
@@ -252,7 +256,7 @@ select {
 }
 .kudos {
   font-family: var(--mono);
-  background: rgba(255, 176, 0, 0.12);
+  background: rgba(255, 140, 60, 0.12);
   border: 1px solid var(--amber);
   border-radius: 10px;
   padding: 0.4em 0.8em;
@@ -287,7 +291,7 @@ select {
   box-shadow: 0 0 22px rgba(255, 59, 59, 0.35) inset;
 }
 .lane.shipped {
-  border-color: rgba(57, 255, 136, 0.6);
+  border-color: rgba(245, 185, 66, 0.6);
 }
 .lane.offline {
   opacity: 0.6;
@@ -522,11 +526,11 @@ select {
 .memo {
   position: relative;
   width: min(60vw, 900px);
-  background: #f3efe2;
+  background: radial-gradient(ellipse at center, #f6e7c4, #e2c891);
   color: #1e1e1e;
   padding: 2em 2.4em;
   border-radius: 4px;
-  font-family: 'Courier New', var(--mono);
+  font-family: Georgia, 'Times New Roman', serif;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
   transform: rotate(-1.5deg);
   animation: memoin 0.5s cubic-bezier(0.2, 1.3, 0.4, 1);
@@ -563,19 +567,22 @@ select {
 .stamp {
   position: absolute;
   right: 1.2em;
-  top: 1.4em;
-  border: 5px solid #c4242b;
-  color: #c4242b;
-  font-weight: 900;
-  font-size: 1.8em;
-  padding: 0.1em 0.5em;
-  transform: rotate(14deg);
-  opacity: 0.85;
+  top: 1.2em;
+  width: 3.2em;
+  height: 3.2em;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d8453a, #8e1b17 70%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4), inset 0 0 0 4px rgba(0, 0, 0, 0.15);
+  color: #f6d9a8;
+  font-size: 1.6em;
+  display: grid;
+  place-items: center;
+  transform: rotate(-8deg);
   animation: stamp 0.25s 0.7s cubic-bezier(0.2, 2, 0.4, 1) both;
 }
 @keyframes stamp {
   from {
-    transform: rotate(14deg) scale(3);
+    transform: rotate(-8deg) scale(3);
     opacity: 0;
   }
 }
@@ -641,7 +648,7 @@ select {
   color: var(--amber);
   font-size: 2.6em;
   margin: 0.3em 0 0.6em;
-  text-shadow: 0 0 20px rgba(255, 176, 0, 0.5);
+  text-shadow: 0 0 20px rgba(255, 140, 60, 0.5);
 }
 .podium {
   display: grid;

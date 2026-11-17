@@ -176,7 +176,7 @@ export class HostController {
 
     if (now - this.lastBotTick < BOT_TICK_MS) return;
     this.lastBotTick = now;
-    // Give the CAB memo and review tally a moment before bots act.
+    // Give the Omen scroll and the judging tally a moment before bots act.
     if (g.phase === 'review' && now - this.phaseSince < 2500) return;
     for (const p of this.game.players.filter((x) => x.bot)) {
       if (Math.random() < 0.25 && this.game.phase === 'deploying') continue; // human-ish pacing
