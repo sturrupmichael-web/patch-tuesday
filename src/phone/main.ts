@@ -170,7 +170,7 @@ app.addEventListener('submit', (ev) => {
     return draw();
   }
   if (!form.name.trim()) {
-    joinError = 'Enter a name for the on-call roster.';
+    joinError = 'Enter a name for your market stall.';
     return draw();
   }
   joinError = '';
@@ -264,7 +264,7 @@ function draw() {
 
 function notice(title: string, sub: string, back: boolean): string {
   return `<div class="screen center">
-    <div class="logo">PATCH<span>_</span>TUESDAY</div>
+    <div class="logo">BRIMSTONE <span>&amp;</span> BREW</div>
     <h2>${title}</h2><p class="muted">${sub}</p>
     ${back ? '<button class="ghost" data-act="leave">Back</button>' : ''}
   </div>`;
@@ -272,23 +272,23 @@ function notice(title: string, sub: string, back: boolean): string {
 
 function joinScreen(): string {
   return `<form class="screen join" autocomplete="off">
-    <div class="logo">PATCH<span>_</span>TUESDAY</div>
-    <p class="muted tagline">Push to prod. What could go wrong?</p>
+    <div class="logo">BRIMSTONE <span>&amp;</span> BREW</div>
+    <p class="muted tagline">Just one more ingredient. What could go wrong?</p>
     <label>Room code<input name="code" value="${esc(form.code)}" maxlength="4" inputmode="text" autocapitalize="characters" placeholder="ABCD" class="code-input"></label>
     <label>Your name<input name="name" value="${esc(form.name)}" maxlength="16" placeholder="e.g. Dana"></label>
-    <div class="label">Pick your role</div>
+    <div class="label">Pick your brewer</div>
     <div class="avatars">${AVATARS.map(
       (a) => `<button type="button" class="av ${form.avatar === a.id ? 'sel' : ''}" data-act="avatar" data-id="${a.id}" style="--c:${a.color}">
         <span class="emoji">${a.emoji}</span><span>${esc(a.name)}</span></button>`,
     ).join('')}</div>
     ${joinError ? `<div class="err">${esc(joinError)}</div>` : ''}
-    <button type="submit" class="big">JOIN CHANGE WINDOW</button>
+    <button type="submit" class="big">JOIN THE FAIR</button>
   </form>`;
 }
 
 function topbar(g: Game, me: Player): string {
   return `<div class="ptop">${avatarBadge(me)} <b>${esc(me.name)}</b>
-    <span class="stats"><span>${me.up} UP</span><span>${me.coffee}☕</span>${g.phase === 'vendor' ? `<span>$${me.budget}</span>` : ''}</span>
+    <span class="stats"><span>${me.up}★</span><span>${me.coffee}💎</span>${g.phase === 'vendor' ? `<span>${me.budget}🪙</span>` : ''}</span>
     <span class="round">${g.round ? `${g.round}/${ROUNDS}` : ''}</span></div>`;
 }
 
@@ -296,16 +296,16 @@ function playerScreen(g: Game, me: Player, s: Session): string {
   let main = '';
   switch (g.phase) {
     case 'lobby':
-      main = `<div class="screen center">${avatarBadge(me, 3)}<h2>You're on the roster!</h2>
+      main = `<div class="screen center">${avatarBadge(me, 3)}<h2>Your stall is set up!</h2>
         <p class="muted">${esc(avatarById(me.avatar).name)} · waiting for the host to start.</p>
         <p class="muted">${g.players.length} player${g.players.length === 1 ? '' : 's'} in the room</p></div>`;
       break;
     case 'cab': {
       const cab = cabById(g.cab);
-      main = `<div class="screen center"><div class="memo-sm"><div class="muted">CAB NOTICE · WINDOW ${g.round}</div>
+      main = `<div class="screen center"><div class="memo-sm"><div class="muted">THE OMEN · NIGHT ${g.round}</div>
         <h2>${esc(cab?.title ?? 'No notice')}</h2><p>${esc(cab?.text ?? '')}</p></div>
-        ${me.headStart ? `<p class="relief">Tech Debt Relief: you start +${me.headStart} spaces ahead</p>` : ''}
-        <p class="muted">Get ready to deploy…</p></div>`;
+        ${me.headStart ? `<p class="relief">🍀 Underdog's Luck: you start +${me.headStart} spaces ahead</p>` : ''}
+        <p class="muted">Stoke your fire…</p></div>`;
       break;
     }
     case 'deploying':
@@ -328,13 +328,13 @@ function bugGauge(g: Game, me: Player): string {
   const lim = g.mods.bugLimit;
   const ratio = Math.min(1, me.bugTotal / lim);
   return `<div class="pgauge"><div class="fill" style="width:${ratio * 100}%;background:${gaugeColor(ratio)}"></div>
-    <div class="lbl">🌡 BUGS <b>${me.bugTotal}</b> / ${lim}</div></div>`;
+    <div class="lbl">☄️ BRIMSTONE <b>${me.bugTotal}</b> / ${lim}</div></div>`;
 }
 
 function waitingList(g: Game): string {
   const still = g.players.filter((p) => p.status === 'deploying');
-  return `<div class="waiting"><div class="muted">Waiting on change approval…</div>
-    ${still.map((p) => `<div>${avatarBadge(p, 0.8)} ${esc(p.name)} <span class="muted">deploying</span></div>`).join('') || '<div class="muted">Everyone is done!</div>'}</div>`;
+  return `<div class="waiting"><div class="muted">Waiting for the others to finish brewing…</div>
+    ${still.map((p) => `<div>${avatarBadge(p, 0.8)} ${esc(p.name)} <span class="muted">brewing</span></div>`).join('') || '<div class="muted">Everyone is done!</div>'}</div>`;
 }
 
 function deploying(g: Game, me: Player, s: Session): string {
@@ -342,27 +342,27 @@ function deploying(g: Game, me: Player, s: Session): string {
   const space = Math.min(me.position, LAST_SPACE);
   const cell = PIPELINE[space];
   const last = me.deployed[me.deployed.length - 1];
-  const spaceInfo = `<div class="spaceinfo">Space <b>${space}</b> · <span class="g">+${cell.up} UP</span> · <span class="a">$${cell.budget}</span>${cell.coffee ? ' · ☕' : ''}</div>`;
+  const spaceInfo = `<div class="spaceinfo">Space <b>${space}</b> · <span class="g">+${cell.up}★</span> · <span class="a">${cell.budget}🪙</span>${cell.coffee ? ' · 💎' : ''}</div>`;
 
   if (me.status === 'down') {
-    return `<div class="screen center down-screen"><div class="boom">🔥</div><h1>PROD DOWN</h1>
-      <p>${me.bugTotal} Bug points. You're out for this window.</p>${spaceInfo}
-      <p class="muted">At review: fix it ($) or explain it (UP). Not both.</p>${waitingList(g)}</div>`;
+    return `<div class="screen center down-screen"><div class="boom">💥</div><h1>KABOOM!</h1>
+      <p>${me.bugTotal} Brimstone. Your cauldron blew its lid for tonight.</p>${spaceInfo}
+      <p class="muted">At judging: sell the scraps (🪙) or tell the tale (★). Not both.</p>${waitingList(g)}</div>`;
   }
   if (me.status === 'shipped') {
-    return `<div class="screen center"><div class="boom">✅</div><h1>SHIPPED IT</h1>${spaceInfo}${waitingList(g)}</div>`;
+    return `<div class="screen center"><div class="boom">🍾</div><h1>CORKED IT</h1>${spaceInfo}${waitingList(g)}</div>`;
   }
   const priv = s.state!.private[s.key];
   if (me.pendingLogReview && priv?.logReview) {
     return `<div class="screen">
       ${bugGauge(g, me)}
-      <h2>🔍 Log Review</h2><p class="muted">Pick one change to deploy now, or none. The rest go back.</p>
+      <h2>🪶 Owl Feather</h2><p class="muted">Pick one ingredient to add now, or none. The rest go back in the satchel.</p>
       <div class="peek">${priv.logReview
         .map(
           (c, i) => `<button class="peek-btn" data-act="peek" data-i="${i}">${chipHtml(c)} <span>${esc(CHANGES[c.type].name)} ${c.value}</span></button>`,
         )
         .join('')}</div>
-      <button class="ghost big" data-act="peek" data-i="none">Deploy none</button>
+      <button class="ghost big" data-act="peek" data-i="none">Add none</button>
     </div>`;
   }
   const canRollback = me.rollbackCharged && last?.type === 'bug';
@@ -373,13 +373,13 @@ function deploying(g: Game, me: Player, s: Session): string {
   return `<div class="screen deploy ${ratio >= 0.7 ? 'hot' : ''}">
     <div class="row">${bugGauge(g, me)}${timer !== null ? `<div class="ptimer ${timer <= 10 ? 'hot' : ''}">${timer}s</div>` : ''}</div>
     ${spaceInfo}
-    <div class="last">${last ? `${chipHtml(last)}<div><div class="muted">Last change</div><b>${esc(CHANGES[last.type].name)} ${last.value}</b></div>` : '<div class="muted">Nothing deployed yet. Feeling lucky?</div>'}</div>
-    <button class="deploy-btn" data-act="draw">DEPLOY</button>
+    <div class="last">${last ? `${chipHtml(last)}<div><div class="muted">Last ingredient</div><b>${esc(CHANGES[last.type].name)} ${last.value}</b></div>` : '<div class="muted">The cauldron is empty. Feeling lucky?</div>'}</div>
+    <button class="deploy-btn" data-act="draw">STIR IN 🥄</button>
     <div class="row2">
-      <button class="ship-btn" data-act="ship">SHIP IT 🚀</button>
-      ${canRollback ? `<button class="rollback-btn" data-act="rollback">⏪ ROLLBACK</button>` : ''}
+      <button class="ship-btn" data-act="ship">CORK IT 🍾</button>
+      ${canRollback ? `<button class="rollback-btn" data-act="rollback">🥄 LADLE OUT</button>` : ''}
     </div>
-    <div class="backlog"><div class="muted">Backlog (${me.pile.length} left) · Rollback ${me.rollbackCharged ? 'ready ⏪' : 'spent'}</div><div class="pks">${peek}</div></div>
+    <div class="backlog"><div class="muted">Satchel (${me.pile.length} left) · Ladle ${me.rollbackCharged ? 'ready 🥄' : 'used'}</div><div class="pks">${peek}</div></div>
   </div>`;
 }
 
@@ -387,12 +387,12 @@ function review(g: Game, me: Player): string {
   const cell = PIPELINE[Math.min(me.position, LAST_SPACE)];
   if (me.pendingScoreChoice) {
     const budget = Math.max(0, cell.budget + g.mods.budgetDelta);
-    return `<div class="screen center"><h2>🔥 Post-Incident Review</h2>
-      <p>Prod went down. You can fix it or explain it, not both.</p>
-      <button class="choice a" data-act="fix">🔧 FIX IT<br><b>+$${budget}</b></button>
-      <button class="choice g" data-act="explain">📝 EXPLAIN IT<br><b>+${cell.up} UP</b></button></div>`;
+    return `<div class="screen center"><h2>💥 Judging</h2>
+      <p>Your cauldron exploded. Sell the scraps or tell the tale, not both.</p>
+      <button class="choice a" data-act="fix">🪙 SELL THE SCRAPS<br><b>+${budget} Silver</b></button>
+      <button class="choice g" data-act="explain">📖 TELL THE TALE<br><b>+${cell.up} Renown</b></button></div>`;
   }
-  return `<div class="screen"><h2>Post-Incident Review</h2>
+  return `<div class="screen"><h2>Judging</h2>
     <div class="lines">${(me.summary?.lines ?? []).map((l) => `<div>${esc(l)}</div>`).join('')}</div>
     ${leaderboard(g)}</div>`;
 }
@@ -400,7 +400,7 @@ function review(g: Game, me: Player): string {
 function vendor(g: Game, me: Player): string {
   if (me.vendorDone) {
     const shopping = g.players.filter((p) => !p.vendorDone);
-    return `<div class="screen center"><h2>🛒 Order placed</h2><p class="muted">Waiting for: ${shopping.map((p) => esc(p.name)).join(', ')}</p>${leaderboard(g)}</div>`;
+    return `<div class="screen center"><h2>🧺 Basket packed</h2><p class="muted">Waiting for: ${shopping.map((p) => esc(p.name)).join(', ')}</p>${leaderboard(g)}</div>`;
   }
   const items = shopItems(g);
   const types = [...new Set(items.map((i) => i.type))];
@@ -412,7 +412,7 @@ function vendor(g: Game, me: Player): string {
         .map((i) => {
           const err = validateBuy(g, me.seat, i.type, i.value);
           return `<button class="buy" data-act="buy" data-type="${i.type}" data-value="${i.value}" ${err ? 'disabled' : ''} title="${esc(err ?? '')}">
-            ${chipHtml(i)}<span>$${i.price}</span></button>`;
+            ${chipHtml(i)}<span>${i.price}🪙</span></button>`;
         })
         .join('');
       const bought = me.purchases.includes(t);
@@ -421,16 +421,16 @@ function vendor(g: Game, me: Player): string {
         <div class="sizes">${sizes}</div></div>`;
     })
     .join('');
-  const sale = g.mods.priceDiscount ? `<div class="sale">🏷 Vendor Sale: $${g.mods.priceDiscount} off everything</div>` : '';
+  const sale = g.mods.priceDiscount ? `<div class="sale">🏷 Haggling Day: ${g.mods.priceDiscount} Silver off everything</div>` : '';
   return `<div class="screen vendor">
-    <h2>🛒 Vendor Portal</h2>
-    <div class="wallet"><span class="a">$${me.budget}</span> budget · <span>${me.purchases.length}/2 bought</span> · <span>${me.coffee}☕</span></div>
-    <div class="muted small">Two different types max. Unspent Budget is lost at the next change window. Use it or lose it!</div>
+    <h2>🧺 Herb Market</h2>
+    <div class="wallet"><span class="a">${me.budget}🪙</span> Silver · <span>${me.purchases.length}/2 bought</span> · <span>${me.coffee}💎</span></div>
+    <div class="muted small">Two different ingredients max. Silver you don't spend tonight is gone tomorrow. Use it or lose it!</div>
     ${sale}
     <div class="shop">${rows}</div>
     <div class="coffee-actions">
-      <button class="ghost" data-act="recharge" ${me.rollbackCharged || me.coffee < ROLLBACK_RECHARGE_COST ? 'disabled' : ''}>⏪ Recharge Rollback (${ROLLBACK_RECHARGE_COST}☕)${me.rollbackCharged ? ' · ready' : ''}</button>
-      <button class="ghost" data-act="improve" ${me.coffee < PROCESS_IMPROVEMENT_COST ? 'disabled' : ''}>📈 Process improvement: start +1 space (${PROCESS_IMPROVEMENT_COST}☕) · now ${me.startPos}</button>
+      <button class="ghost" data-act="recharge" ${me.rollbackCharged || me.coffee < ROLLBACK_RECHARGE_COST ? 'disabled' : ''}>🥄 Restore your Ladle (${ROLLBACK_RECHARGE_COST}💎)${me.rollbackCharged ? ' · ready' : ''}</button>
+      <button class="ghost" data-act="improve" ${me.coffee < PROCESS_IMPROVEMENT_COST ? 'disabled' : ''}>🔥 Stoke the fire: start +1 space for good (${PROCESS_IMPROVEMENT_COST}💎) · now ${me.startPos}</button>
     </div>
     <button class="big" data-act="vendor-done">DONE SHOPPING ✔</button>
   </div>`;
@@ -438,7 +438,7 @@ function vendor(g: Game, me: Player): string {
 
 function leaderboard(g: Game): string {
   return `<div class="plb">${standings(g)
-    .map((p, i) => `<div><span class="muted">#${i + 1}</span> ${avatarBadge(p, 0.8)} ${esc(p.name)} <b>${p.up}</b></div>`)
+    .map((p, i) => `<div><span class="muted">#${i + 1}</span> ${avatarBadge(p, 0.8)} ${esc(p.name)} <b>${p.up}★</b></div>`)
     .join('')}</div>`;
 }
 
@@ -447,16 +447,16 @@ function finalScreen(g: Game, me: Player): string {
   const rank = s.findIndex((p) => p.seat === me.seat) + 1;
   return `<div class="screen center">
     <div class="boom">${rank === 1 ? '🏆' : rank <= 3 ? '🎖️' : '📋'}</div>
-    <h1>${rank === 1 ? 'EMPLOYEE OF THE MONTH' : `#${rank} of ${s.length}`}</h1>
-    <p><b>${me.up} UP</b></p>
+    <h1>${rank === 1 ? 'GRAND ALCHEMIST' : `#${rank} of ${s.length}`}</h1>
+    <p><b>${me.up} Renown ★</b></p>
     <div class="lines">${(me.summary?.lines ?? []).map((l) => `<div>${esc(l)}</div>`).join('')}</div>
     ${leaderboard(g)}</div>`;
 }
 
 function spectator(g: Game): string {
-  return `<div class="screen center"><div class="logo">PATCH<span>_</span>TUESDAY</div>
+  return `<div class="screen center"><div class="logo">BRIMSTONE <span>&amp;</span> BREW</div>
     <h2>👀 Spectator mode</h2>
-    ${g.phase === 'lobby' ? `<p class="muted">The game hasn't started yet.</p><button class="big" data-act="rejoin">JOIN AS ${esc(form.name || '…')}</button>` : `<p class="muted">This change window already started. You're watching round ${g.round}/${ROUNDS}.</p>`}
+    ${g.phase === 'lobby' ? `<p class="muted">The game hasn't started yet.</p><button class="big" data-act="rejoin">JOIN AS ${esc(form.name || '…')}</button>` : `<p class="muted">The fair already started. You're watching night ${g.round}/${ROUNDS}.</p>`}
     ${leaderboard(g)}
     <button class="ghost" data-act="leave">Back</button></div>`;
 }

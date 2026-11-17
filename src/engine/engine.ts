@@ -1,5 +1,5 @@
 /**
- * PATCH TUESDAY rules engine.
+ * BRIMSTONE & BREW rules engine.
  *
  * Pure: `reduce(game, action)` returns a NEW game (the input is never mutated)
  * or throws a RuleError. All randomness comes from the seeded RNG state stored
@@ -154,16 +154,16 @@ export function isUnlocked(g: Game, type: ChangeType): boolean {
 
 /** Vendor Portal validation, shared by the phone (UX) and the host (authority). */
 export function validateBuy(g: Game, seat: number, type: ChangeType, value: number): string | null {
-  if (g.phase !== 'vendor') return 'The Vendor Portal is closed';
+  if (g.phase !== 'vendor') return 'The Herb Market is closed';
   const p = g.players.find((x) => x.seat === seat);
   if (!p) return 'No such seat';
-  if (p.vendorDone) return 'You already closed the Vendor Portal';
+  if (p.vendorDone) return 'You already left the Herb Market';
   if (!isUnlocked(g, type)) return `${CHANGES[type].name} is not available yet`;
   const price = priceOf(g, type, value);
-  if (price === null) return 'That change is not sold at that size';
+  if (price === null) return 'That ingredient is not sold at that size';
   if (p.purchases.length >= MAX_PURCHASES) return `You can buy at most ${MAX_PURCHASES} changes per round`;
-  if (p.purchases.includes(type)) return 'Your two purchases must be different types';
-  if (price > p.budget) return 'Not enough Budget';
+  if (p.purchases.includes(type)) return 'Your two purchases must be different ingredients';
+  if (price > p.budget) return 'Not enough Silver';
   return null;
 }
 
@@ -213,7 +213,7 @@ function startRound(g: Game, rng: Rng) {
     p.budget = 0; // Budget is use-it-or-lose-it: unspent money is lost at the next window.
   }
   if (cab) {
-    ev(g, 'cab', null, `CAB NOTICE: ${cab.title}`);
+    ev(g, 'cab', null, `OMEN: ${cab.title}`);
     applyInstant(g, cab);
   }
   // Tech Debt Relief: head start for players behind the leader.
@@ -249,7 +249,7 @@ function drawRandom(p: Player, rng: Rng): Change {
   return p.pile.splice(i, 1)[0];
 }
 
-function ship(g: Game, p: Player, reason = 'SHIPPED IT ✅') {
+function ship(g: Game, p: Player, reason = 'CORKED IT 🍾') {
   returnLogReview(p);
   p.status = 'shipped';
   p.stats.ships += 1;
@@ -288,7 +288,7 @@ function placeChange(g: Game, p: Player, chip: Change, rng: Rng) {
       p.bugTotal -= prev.bugPoints;
       if (prev.value === 3) p.bug3s -= 1;
       p.pile.push({ id: prev.id, type: prev.type, value: prev.value });
-      ev(g, 'unittest', p.seat, `${p.name}'s Unit Test caught a Bug ${prev.value}`);
+      ev(g, 'unittest', p.seat, `${p.name}'s Salt Crystal neutralised a Brimstone ${prev.value}`);
     }
   }
   if (m.firstChangeDouble && p.draws === 0) move *= 2;
@@ -304,14 +304,14 @@ function placeChange(g: Game, p: Player, chip: Change, rng: Rng) {
 
   if (chip.type === 'bug' && chip.value === 3) p.bug3s += 1;
   if (m.freezeOn3s && chip.type === 'bug' && chip.value === 3 && p.bug3s >= 2) {
-    ship(g, p, 'was auto-shipped by the Change Freeze ❄️');
+    ship(g, p, 'was corked by the Calm Winds 🌬️');
     return;
   }
   if (p.bugTotal > m.bugLimit) {
     p.status = 'down';
     p.stats.outages += 1;
     returnLogReview(p);
-    ev(g, 'down', p.seat, `PROD DOWN 🔥 — ${p.name}`);
+    ev(g, 'down', p.seat, `KABOOM 💥 — ${p.name}`);
     return;
   }
   if (chip.type === 'logreview' && p.pile.length > 0) {
@@ -319,7 +319,7 @@ function placeChange(g: Game, p: Player, chip: Change, rng: Rng) {
     p.pendingLogReview = Array.from({ length: n }, () => drawRandom(p, rng));
     return;
   }
-  if (p.pile.length === 0) ship(g, p, 'emptied the backlog and SHIPPED IT ✅');
+  if (p.pile.length === 0) ship(g, p, 'emptied the satchel and CORKED IT 🍾');
 }
 
 function maybeEndDeploying(g: Game, rng: Rng) {
@@ -374,8 +374,8 @@ function runReview(g: Game, rng: Rng) {
         applyKudos(g, p, face);
         p.stats.kudos += 1;
         g.kudos.push({ seat: p.seat, face });
-        say(p, `🎲 Kudos Die: ${kudosLabel(face)}`);
-        ev(g, 'kudos', p.seat, `${p.name} rolled the Kudos Die: ${kudosLabel(face)}`);
+        say(p, `🎲 Lucky Die: ${kudosLabel(face)}`);
+        ev(g, 'kudos', p.seat, `${p.name} rolled the Lucky Die: ${kudosLabel(face)}`);
       }
     }
   }
@@ -389,7 +389,7 @@ function runReview(g: Game, rng: Rng) {
     const hf = tail.filter((d) => d.type === 'hotfix').length;
     if (hf > 0) {
       addCoffee(p, hf);
-      say(p, `🩹 Late Hotfix: +${hf} ☕`);
+      say(p, `🍃 Late Dewleaf: +${hf} 💎`);
     }
     // Shadow IT vs neighbors.
     if (shadow[i] > 0) {
@@ -399,10 +399,10 @@ function runReview(g: Game, rng: Rng) {
       if (beats === 2) {
         p.position += 1;
         addCoffee(p, 1);
-        say(p, '🕶️ Most Shadow IT on the floor: +1 space, +1 ☕');
+        say(p, '🫐 Most Shadow Plums at the fair: +1 space, +1 💎');
       } else if (beats === 1) {
         p.position += 1;
-        say(p, '🕶️ Out-shadowed a neighbor: +1 space');
+        say(p, '🫐 More Shadow Plums than a neighbor: +1 space');
       }
     }
     // Exec Sponsor.
@@ -412,23 +412,23 @@ function runReview(g: Game, rng: Rng) {
       if (eff >= 3) {
         p.up += 2;
         p.backlog.push(newChange(g, 'script', 1));
-        say(p, '👔 Exec Sponsors (3+): +2 UP and a free Script');
+        say(p, '🌸 Starblooms (3+): +2 ★ and a free Carrot');
       } else if (eff === 2) {
         p.up += 1;
         addCoffee(p, 1);
-        say(p, '👔 Exec Sponsors (2): +1 UP, +1 ☕');
+        say(p, '🌸 Starblooms (2): +1 ★, +1 💎');
       } else {
         p.up += 1;
-        say(p, '👔 Exec Sponsor: +1 UP');
+        say(p, '🌸 Starbloom: +1 ★');
       }
     }
     if (m.complianceBonus && shadow[i] === 0) {
       p.up += 1;
-      say(p, '📋 Compliance bonus: +1 UP');
+      say(p, '📜 Guild Inspection bonus: +1 ★');
     }
     if (m.retroBonus && p.status === 'shipped' && p.bugTotal <= 4) {
       p.up += 2;
-      say(p, '🔁 Sprint Retro: +2 UP');
+      say(p, '✋ Steady Hands: +2 ★');
     }
   });
 
@@ -439,16 +439,16 @@ function runReview(g: Game, rng: Rng) {
     const cell = PIPELINE[space];
     if (cell.coffee) {
       addCoffee(p, 1);
-      say(p, '☕ Landed on a Coffee space: +1 ☕');
+      say(p, '💎 Landed on a Moonstone space: +1 💎');
     }
     const budget = Math.max(0, cell.budget + m.budgetDelta);
     if (p.status !== 'down' || m.downTakesBoth) {
       p.budget += budget;
       p.up += cell.up;
-      say(p, `Space ${space}: +$${budget} and +${cell.up} UP`);
+      say(p, `Space ${space}: +${budget} 🪙 and +${cell.up} ★`);
     } else {
       p.pendingScoreChoice = true;
-      say(p, `PROD DOWN on space ${space}: fix it ($${budget}) or explain it (+${cell.up} UP)`);
+      say(p, `KABOOM on space ${space}: sell the scraps (+${budget} 🪙) or tell the tale (+${cell.up} ★)`);
     }
     p.summary = {
       space,
@@ -470,13 +470,13 @@ function finalize(g: Game) {
     p.summary = {
       space: p.position,
       status: p.status,
-      lines: [`Leftover $${p.budget} → +${fromBudget} UP`, `Leftover ${p.coffee} ☕ → +${fromCoffee} UP`],
+      lines: [`Leftover ${p.budget} 🪙 → +${fromBudget} ★`, `Leftover ${p.coffee} 💎 → +${fromCoffee} ★`],
       budget: p.budget,
       up: fromBudget + fromCoffee,
       coffee: p.coffee,
     };
   }
-  ev(g, 'final', null, 'Change window closed. Employee of the Month is…');
+  ev(g, 'final', null, 'The fair is over. The Grand Alchemist is…');
 }
 
 // ---------------------------------------------------------------------------
@@ -512,7 +512,7 @@ function apply(g: Game, a: Action, rng: Rng) {
       if (g.players.length >= MAX_SEATS) throw new RuleError('The room is full (6 players)');
       const p = newPlayer(g, nextSeat(g), cleanName(a.name), avatar, a.key, null);
       g.players.push(p);
-      ev(g, 'join', p.seat, `${p.name} joined the change window`);
+      ev(g, 'join', p.seat, `${p.name} joined the fair`);
       return;
     }
     case 'setConnected': {
@@ -523,15 +523,15 @@ function apply(g: Game, a: Action, rng: Rng) {
     case 'addBot': {
       requirePhase(g, 'lobby');
       if (g.players.length >= MAX_SEATS) throw new RuleError('The room is full (6 players)');
-      if (a.bot === 'vendor' && g.players.some((p) => p.bot === 'vendor')) throw new RuleError('Legacy Vendor is already here');
+      if (a.bot === 'vendor' && g.players.some((p) => p.bot === 'vendor')) throw new RuleError('The Rival Peddler is already here');
       const n = g.players.filter((p) => p.bot === 'dev').length + 1;
       const seat = nextSeat(g);
       const p =
         a.bot === 'vendor'
-          ? newPlayer(g, seat, 'Legacy Vendor', 'vendor', `bot-vendor`, 'vendor')
+          ? newPlayer(g, seat, 'Rival Peddler', 'vendor', `bot-vendor`, 'vendor')
           : newPlayer(g, seat, `Bot ${n}`, 'bot', `bot-${seat}-${n}`, 'dev');
       g.players.push(p);
-      ev(g, 'join', p.seat, `${p.name} joined the change window`);
+      ev(g, 'join', p.seat, `${p.name} joined the fair`);
       return;
     }
     case 'removePlayer': {
@@ -558,7 +558,7 @@ function apply(g: Game, a: Action, rng: Rng) {
         apply(g, { type: 'addBot', bot: 'vendor' }, rng);
       }
       if (!wantVendor) g.players = g.players.filter((p) => p.bot !== 'vendor');
-      if (g.players.length < 2) throw new RuleError('Need at least 2 players (add a bot in dev mode)');
+      if (g.players.length < 2) throw new RuleError('Need at least 2 brewers (add a bot in dev mode)');
       g.players.sort((x, y) => x.seat - y.seat);
       g.cabDeck = rng.shuffle(CAB_NOTICES.map((c) => c.id)).slice(0, ROUNDS);
       startRound(g, rng);
@@ -574,10 +574,10 @@ function apply(g: Game, a: Action, rng: Rng) {
     case 'draw': {
       requirePhase(g, 'deploying');
       const p = getPlayer(g, a.seat);
-      if (p.status !== 'deploying') throw new RuleError('You are not deploying');
-      if (p.pendingLogReview) throw new RuleError('Finish your Log Review first');
+      if (p.status !== 'deploying') throw new RuleError('Your cauldron is not on the fire');
+      if (p.pendingLogReview) throw new RuleError('Finish your Owl Feather peek first');
       if (p.pile.length === 0) {
-        ship(g, p, 'emptied the backlog and SHIPPED IT ✅');
+        ship(g, p, 'emptied the satchel and CORKED IT 🍾');
       } else {
         placeChange(g, p, drawRandom(p, rng), rng);
       }
@@ -588,11 +588,11 @@ function apply(g: Game, a: Action, rng: Rng) {
       requirePhase(g, 'deploying');
       const p = getPlayer(g, a.seat);
       const opts = p.pendingLogReview;
-      if (!opts) throw new RuleError('No Log Review pending');
+      if (!opts) throw new RuleError('No Owl Feather peek pending');
       p.pendingLogReview = null;
       if (a.index === null) {
         p.pile.push(...opts);
-        ev(g, 'info', p.seat, `${p.name} reviewed the logs and deployed nothing`);
+        ev(g, 'info', p.seat, `${p.name} peeked with an Owl Feather and added nothing`);
         if (p.pile.length === 0) ship(g, p);
       } else {
         if (!Number.isInteger(a.index) || a.index < 0 || a.index >= opts.length) {
@@ -609,7 +609,7 @@ function apply(g: Game, a: Action, rng: Rng) {
     case 'ship': {
       requirePhase(g, 'deploying');
       const p = getPlayer(g, a.seat);
-      if (p.status !== 'deploying') throw new RuleError('You are not deploying');
+      if (p.status !== 'deploying') throw new RuleError('Your cauldron is not on the fire');
       ship(g, p);
       maybeEndDeploying(g, rng);
       return;
@@ -617,18 +617,18 @@ function apply(g: Game, a: Action, rng: Rng) {
     case 'rollback': {
       requirePhase(g, 'deploying');
       const p = getPlayer(g, a.seat);
-      if (p.status !== 'deploying') throw new RuleError('You are not deploying');
-      if (!p.rollbackCharged) throw new RuleError('Rollback is not charged (3 ☕ to recharge)');
-      if (p.pendingLogReview) throw new RuleError('Finish your Log Review first');
+      if (p.status !== 'deploying') throw new RuleError('Your cauldron is not on the fire');
+      if (!p.rollbackCharged) throw new RuleError('Your Ladle is used up (3 💎 to restore it)');
+      if (p.pendingLogReview) throw new RuleError('Finish your Owl Feather peek first');
       const last = p.deployed[p.deployed.length - 1];
-      if (!last || last.type !== 'bug') throw new RuleError('You can only roll back a Bug you just drew');
+      if (!last || last.type !== 'bug') throw new RuleError('The Ladle only scoops out a Brimstone you just added');
       p.deployed.pop();
       p.position -= last.moved;
       p.bugTotal -= last.bugPoints;
       if (last.value === 3) p.bug3s -= 1;
       p.pile.push({ id: last.id, type: last.type, value: last.value });
       p.rollbackCharged = false;
-      ev(g, 'rollback', p.seat, `${p.name} rolled back a Bug ${last.value} ⏪`);
+      ev(g, 'rollback', p.seat, `${p.name} ladled out a Brimstone ${last.value} 🥄`);
       return;
     }
     case 'timeout': {
@@ -645,11 +645,11 @@ function apply(g: Game, a: Action, rng: Rng) {
       if (a.pick === 'budget') {
         const b = Math.max(0, cell.budget + g.mods.budgetDelta);
         p.budget += b;
-        p.summary?.lines.push(`Chose to fix it: +$${b}`);
+        p.summary?.lines.push(`Sold the scraps: +${b} 🪙`);
       } else {
         p.up += cell.up;
         if (p.summary) p.summary.up += cell.up;
-        p.summary?.lines.push(`Chose to explain it: +${cell.up} UP`);
+        p.summary?.lines.push(`Told the tale: +${cell.up} ★`);
       }
       if (p.summary) p.summary.budget = p.budget;
       p.pendingScoreChoice = false;
@@ -657,7 +657,7 @@ function apply(g: Game, a: Action, rng: Rng) {
     }
     case 'toVendor': {
       requirePhase(g, 'review');
-      if (g.players.some((p) => p.pendingScoreChoice)) throw new RuleError('Waiting on outage choices');
+      if (g.players.some((p) => p.pendingScoreChoice)) throw new RuleError('Waiting on exploded brewers to choose');
       if (g.round >= ROUNDS) {
         finalize(g);
         return;
@@ -678,9 +678,9 @@ function apply(g: Game, a: Action, rng: Rng) {
     case 'recharge': {
       requirePhase(g, 'vendor');
       const p = getPlayer(g, a.seat);
-      if (p.vendorDone) throw new RuleError('You already closed the Vendor Portal');
-      if (p.rollbackCharged) throw new RuleError('Rollback is already charged');
-      if (p.coffee < ROLLBACK_RECHARGE_COST) throw new RuleError(`Need ${ROLLBACK_RECHARGE_COST} ☕`);
+      if (p.vendorDone) throw new RuleError('You already left the Herb Market');
+      if (p.rollbackCharged) throw new RuleError('Your Ladle is already ready');
+      if (p.coffee < ROLLBACK_RECHARGE_COST) throw new RuleError(`Need ${ROLLBACK_RECHARGE_COST} 💎`);
       p.coffee -= ROLLBACK_RECHARGE_COST;
       p.rollbackCharged = true;
       return;
@@ -688,9 +688,9 @@ function apply(g: Game, a: Action, rng: Rng) {
     case 'improve': {
       requirePhase(g, 'vendor');
       const p = getPlayer(g, a.seat);
-      if (p.vendorDone) throw new RuleError('You already closed the Vendor Portal');
-      if (p.coffee < PROCESS_IMPROVEMENT_COST) throw new RuleError(`Need ${PROCESS_IMPROVEMENT_COST} ☕`);
-      if (p.startPos >= MAX_START_POS) throw new RuleError('Process is already world-class');
+      if (p.vendorDone) throw new RuleError('You already left the Herb Market');
+      if (p.coffee < PROCESS_IMPROVEMENT_COST) throw new RuleError(`Need ${PROCESS_IMPROVEMENT_COST} 💎`);
+      if (p.startPos >= MAX_START_POS) throw new RuleError('Your fire is already roaring');
       p.coffee -= PROCESS_IMPROVEMENT_COST;
       p.startPos += 1;
       return;
@@ -732,10 +732,10 @@ export function awards(g: Game): Award[] {
     const best = [...g.players].sort((a, b) => score(b) - score(a))[0];
     if (best && score(best) >= min) out.push({ title, seat: best.seat, detail: detail(best) });
   };
-  pick('Most Outages 🔥', (p) => p.stats.outages, (p) => `prod went down ${p.stats.outages} time${p.stats.outages === 1 ? '' : 's'}`);
-  pick('Biggest Single Deploy 🚀', (p) => p.stats.biggestDeploy, (p) => `reached space ${p.stats.biggestDeploy}`);
-  pick('Coffee Hoarder ☕', (p) => p.stats.maxCoffee, (p) => `held ${p.stats.maxCoffee} ☕ at once`);
-  pick('Friday Deployer 📅', (p) => p.stats.riskiestShip, (p) => `shipped with ${p.stats.riskiestShip} Bug points`, 0);
+  pick('Most Kabooms 💥', (p) => p.stats.outages, (p) => `blew up ${p.stats.outages} time${p.stats.outages === 1 ? '' : 's'}`);
+  pick('Biggest Brew 🧪', (p) => p.stats.biggestDeploy, (p) => `reached space ${p.stats.biggestDeploy}`);
+  pick('Moonstone Hoarder 💎', (p) => p.stats.maxCoffee, (p) => `held ${p.stats.maxCoffee} 💎 at once`);
+  pick('Living Dangerously 🔥', (p) => p.stats.riskiestShip, (p) => `corked it with ${p.stats.riskiestShip} Brimstone`, 0);
   return out;
 }
 

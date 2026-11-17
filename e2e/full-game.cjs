@@ -28,7 +28,7 @@ require('fs').mkdirSync(SHOTS, { recursive: true });
     await p.click('button[type=submit]');
     phones.push(p);
   }
-  await phones[1].waitForSelector('text=on the roster');
+  await phones[1].waitForSelector('text=Your stall is set up');
   await phones[0].screenshot({ path: SHOTS + 'phone-lobby.png' });
   await host.click('[data-act=add-bot]');
   await host.waitForTimeout(500);
@@ -54,7 +54,7 @@ require('fs').mkdirSync(SHOTS, { recursive: true });
         if (!btn) continue;
         any = true;
         const txt = await p.textContent('.pgauge .lbl');
-        const bugs = Number(/BUGS (\d+)/.exec(txt)[1]);
+        const bugs = Number(/BRIMSTONE (\d+)/.exec(txt)[1]);
         if (bugs >= (i === 0 ? 5 : 6)) await p.click('[data-act=ship]');
         else await btn.click();
         await p.waitForTimeout(200);

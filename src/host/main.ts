@@ -70,12 +70,12 @@ function onEvent(e: GameEvent, g: Game) {
       break;
     case 'ship':
       sfx.chaChing();
-      banner(`${esc(p?.name ?? '')} SHIPPED IT ✅`, 'ok');
+      banner(`${esc(p?.name ?? '')} CORKED IT 🍾`, 'ok');
       break;
     case 'down':
       sfx.pager();
       sfx.explosion();
-      banner(`PROD DOWN 🔥 — ${esc(p?.name ?? '')}`, 'down');
+      banner(`KABOOM 💥 — ${esc(p?.name ?? '')}`, 'down');
       document.body.classList.remove('shake', 'alert');
       void document.body.offsetWidth;
       document.body.classList.add('shake', 'alert');
@@ -177,12 +177,12 @@ function playAgain() {
 // ---------------------------------------------------------------------------
 
 const PHASE_LABEL: Record<Game['phase'], string> = {
-  lobby: 'LOBBY',
-  cab: 'CAB NOTICE',
-  deploying: 'DEPLOYING',
-  review: 'POST-INCIDENT REVIEW',
-  vendor: 'VENDOR PORTAL',
-  final: 'CHANGE WINDOW CLOSED',
+  lobby: 'GATHERING',
+  cab: 'THE OMEN',
+  deploying: 'BREWING',
+  review: 'JUDGING',
+  vendor: 'HERB MARKET',
+  final: 'THE FAIR IS OVER',
 };
 
 function draw() {
@@ -215,9 +215,9 @@ function header(g: Game): string {
       ? Math.max(0, Math.ceil((g.deployDeadline - Date.now()) / 1000))
       : null;
   return `<header class="topbar">
-    <div class="brand">PATCH<span>_</span>TUESDAY</div>
+    <div class="brand">BRIMSTONE <span>&amp;</span> BREW</div>
     <div class="status">
-      ${g.round ? `<span class="pill">CHANGE WINDOW ${g.round}/${ROUNDS}</span>` : ''}
+      ${g.round ? `<span class="pill">NIGHT ${g.round}/${ROUNDS}</span>` : ''}
       <span class="pill phase-${g.phase}">${PHASE_LABEL[g.phase]}</span>
       ${timer !== null ? `<span class="pill timer ${timer <= 10 ? 'hot' : ''}">⏱ ${timer}s</span>` : ''}
     </div>
@@ -241,7 +241,7 @@ function lobby(g: Game): string {
       </div>`,
     )
     .join('');
-  const empty = Array.from({ length: Math.max(0, MAX_SEATS - g.players.length) }, () => `<div class="seat empty">waiting for a sysadmin…</div>`).join('');
+  const empty = Array.from({ length: Math.max(0, MAX_SEATS - g.players.length) }, () => `<div class="seat empty">an empty stall…</div>`).join('');
   const canStart = g.players.length + (g.settings.legacyVendor && vendorEligible ? 1 : 0) >= 2;
   return `<main class="lobby">
     <section class="join-card">
@@ -252,7 +252,7 @@ function lobby(g: Game): string {
       ${hasSupabase() ? '' : `<div class="warn">Local mode: no Supabase env vars, so only tabs in this browser can join. See README.</div>`}
     </section>
     <section class="lobby-right">
-      <h2>&gt; on_call_roster <span class="muted">(${g.players.length}/${MAX_SEATS})</span></h2>
+      <h2>The Brewers <span class="muted">(${g.players.length}/${MAX_SEATS})</span></h2>
       <div class="seats">${seats}${empty}</div>
       <div class="settings">
         <label>Deploy timer
@@ -261,13 +261,13 @@ function lobby(g: Game): string {
           </select>
         </label>
         <button class="toggle ${g.settings.legacyVendor ? 'on' : ''}" data-act="toggle-vendor" ${vendorEligible ? '' : 'disabled'}>
-          🦖 Legacy Vendor bot: ${g.settings.legacyVendor ? 'ON' : 'OFF'} <span class="muted">(2–3 players)</span>
+          🦝 Rival Peddler bot: ${g.settings.legacyVendor ? 'ON' : 'OFF'} <span class="muted">(2–3 players)</span>
         </button>
         <button class="toggle ${g.settings.sound ? 'on' : ''}" data-act="toggle-sound">Sound: ${g.settings.sound ? 'ON' : 'OFF'}</button>
         ${DEV ? `<button class="toggle" data-act="add-bot">🤖 Add dev bot</button><span class="muted">seed ${g.seed}</span>` : ''}
       </div>
-      <button class="start" data-act="start" ${canStart ? '' : 'disabled'}>START CHANGE WINDOW ▶</button>
-      ${canStart ? '' : '<div class="muted">Need at least 2 players (or 1 player + Legacy Vendor).</div>'}
+      <button class="start" data-act="start" ${canStart ? '' : 'disabled'}>LIGHT THE FIRES ▶</button>
+      ${canStart ? '' : '<div class="muted">Need at least 2 brewers (or 1 brewer + the Rival Peddler).</div>'}
     </section>
   </main>`;
 }
@@ -280,7 +280,7 @@ function track(g: Game, p: Player): string {
   const start = laneStart(g, p);
   const cells = PIPELINE.map(
     (c, i) => `<div class="cell ${i < start ? 'pre' : ''} ${c.coffee ? 'coffee' : ''}">
-      <span class="c-up">${c.up}</span><span class="c-b">$${c.budget}</span>${c.coffee ? '<span class="c-cof">☕</span>' : ''}
+      <span class="c-up">${c.up}</span><span class="c-b">${c.budget}🪙</span>${c.coffee ? '<span class="c-cof">💎</span>' : ''}
     </div>`,
   ).join('');
   let pos = start;
@@ -302,24 +302,24 @@ function track(g: Game, p: Player): string {
 function gauge(g: Game, p: Player): string {
   const lim = g.mods.bugLimit;
   const ratio = Math.min(1, p.bugTotal / lim);
-  return `<div class="gauge" title="Bugs">
+  return `<div class="gauge" title="Brimstone">
     <div class="gauge-fill" style="width:${ratio * 100}%;background:${gaugeColor(ratio)}"></div>
-    <div class="gauge-label">🌡 BUGS ${p.bugTotal}/${lim}</div>
+    <div class="gauge-label">☄️ BRIMSTONE ${p.bugTotal}/${lim}</div>
   </div>`;
 }
 
 function statusTag(g: Game, p: Player): string {
-  if (g.phase === 'vendor') return p.vendorDone ? '<span class="tag ok">DONE ✅</span>' : '<span class="tag">SHOPPING 🛒</span>';
-  if (g.phase === 'review' && p.pendingScoreChoice) return '<span class="tag warn">FIX OR EXPLAIN? 🤔</span>';
+  if (g.phase === 'vendor') return p.vendorDone ? '<span class="tag ok">DONE ✅</span>' : '<span class="tag">SHOPPING 🧺</span>';
+  if (g.phase === 'review' && p.pendingScoreChoice) return '<span class="tag warn">SCRAPS OR TALE? 🤔</span>';
   switch (p.status) {
     case 'deploying':
-      return p.pendingLogReview ? '<span class="tag">READING LOGS 🔍</span>' : '<span class="tag live">DEPLOYING<span class="blink">_</span></span>';
+      return p.pendingLogReview ? '<span class="tag">PEEKING 🪶</span>' : '<span class="tag live">BREWING<span class="blink">…</span></span>';
     case 'shipped':
-      return '<span class="tag ok">SHIPPED ✅</span>';
+      return '<span class="tag ok">CORKED 🍾</span>';
     case 'down':
-      return '<span class="tag down">PROD DOWN 🔥</span>';
+      return '<span class="tag down">KABOOM 💥</span>';
     default:
-      return '<span class="tag">STANDBY</span>';
+      return '<span class="tag">WAITING</span>';
   }
 }
 
@@ -328,14 +328,14 @@ function lane(g: Game, p: Player): string {
     g.phase === 'review' && p.summary
       ? `<div class="summary">${p.summary.lines.map((l, i) => `<div style="animation-delay:${0.3 + i * 0.6}s">${esc(l)}</div>`).join('')}</div>`
       : g.phase === 'vendor'
-        ? `<div class="summary static">${p.purchases.length ? 'Bought: ' + p.backlog.slice(-p.purchases.length).map((c) => chipHtml(c, 'sm')).join(' ') : `<span class="muted">Budget $${p.budget}</span>`}</div>`
+        ? `<div class="summary static">${p.purchases.length ? 'Bought: ' + p.backlog.slice(-p.purchases.length).map((c) => chipHtml(c, 'sm')).join(' ') : `<span class="muted">${p.budget} 🪙 to spend</span>`}</div>`
         : '';
   return `<div class="lane ${p.status} ${p.connected || p.bot ? '' : 'offline'}" data-seat="${p.seat}">
     <div class="rack">
       <div class="rack-head">${avatarBadge(p)}<span class="name">${esc(p.name)}</span>${p.connected || p.bot ? '' : '<span class="muted">📵</span>'}</div>
       ${statusTag(g, p)}
       ${gauge(g, p)}
-      <div class="rack-stats"><span>${p.up} UP</span><span>${p.coffee} ☕</span>${p.rollbackCharged ? '<span title="Rollback ready">⏪</span>' : ''}${p.headStart ? `<span class="relief" title="Tech Debt Relief">+${p.headStart} relief</span>` : ''}</div>
+      <div class="rack-stats"><span>${p.up} ★</span><span>${p.coffee} 💎</span>${p.rollbackCharged ? '<span title="Ladle ready">🥄</span>' : ''}${p.headStart ? `<span class="relief" title="Underdog's Luck">+${p.headStart} 🍀</span>` : ''}</div>
     </div>
     <div class="lane-main">${track(g, p)}${extra}</div>
   </div>`;
@@ -343,7 +343,7 @@ function lane(g: Game, p: Player): string {
 
 function leaderboard(g: Game): string {
   return `<aside class="leaderboard">
-    <h3>&gt; uptime_leaderboard</h3>
+    <h3>Renown</h3>
     ${standings(g)
       .map(
         (p, i) => `<div class="lb-row"><span class="rank">#${i + 1}</span>${avatarBadge(p, 0.8)}<span class="name">${esc(p.name)}</span><span class="up">${p.up}</span></div>`,
@@ -356,35 +356,35 @@ function cabMemo(g: Game): string {
   const cab = cabById(g.cab);
   if (!cab) return '';
   return `<div class="memo-wrap"><div class="memo">
-    <div class="memo-head">CHANGE ADVISORY BOARD · NOTICE #${String(g.round).padStart(3, '0')}</div>
+    <div class="memo-head">THE OMEN FOR NIGHT ${g.round}</div>
     <div class="memo-title">${esc(cab.title)}</div>
     <div class="memo-text">${esc(cab.text)}</div>
-    <div class="stamp">APPROVED</div>
-    <button class="memo-go" data-act="begin-deploy">BEGIN DEPLOY ▶</button>
-    <div class="memo-foot">${g.players.filter((p) => p.headStart).map((p) => `${esc(p.name)} gets +${p.headStart} Tech Debt Relief`).join(' · ') || 'No Tech Debt Relief this window.'}</div>
+    <div class="stamp">✶</div>
+    <button class="memo-go" data-act="begin-deploy">START BREWING ▶</button>
+    <div class="memo-foot">${g.players.filter((p) => p.headStart).map((p) => `${esc(p.name)} gets +${p.headStart} Underdog's Luck 🍀`).join(' · ') || 'Nobody needs Underdog\'s Luck tonight.'}</div>
   </div></div>`;
 }
 
 function board(g: Game): string {
   const waiting = g.players.filter((p) => p.status === 'deploying').map((p) => esc(p.name));
   let controls = '';
-  if (g.phase === 'cab') controls = `<button data-act="begin-deploy">BEGIN DEPLOY ▶</button>`;
+  if (g.phase === 'cab') controls = `<button data-act="begin-deploy">START BREWING ▶</button>`;
   if (g.phase === 'deploying')
-    controls = `<span class="muted">Waiting on change approval: ${waiting.join(', ') || '—'}</span><button class="ghost" data-act="force-ship">Force ship all</button>`;
+    controls = `<span class="muted">Still brewing: ${waiting.join(', ') || '—'}</span><button class="ghost" data-act="force-ship">Cork everyone</button>`;
   if (g.phase === 'review') {
     const pending = g.players.filter((p) => p.pendingScoreChoice).map((p) => esc(p.name));
     controls = pending.length
-      ? `<span class="muted">Waiting on outage choices: ${pending.join(', ')}</span>`
-      : `<button data-act="to-vendor">${g.round >= ROUNDS ? 'FINAL RESULTS ▶' : 'OPEN VENDOR PORTAL ▶'}</button>`;
+      ? `<span class="muted">Waiting on exploded brewers: ${pending.join(', ')}</span>`
+      : `<button data-act="to-vendor">${g.round >= ROUNDS ? 'FINAL RESULTS ▶' : 'OPEN THE HERB MARKET ▶'}</button>`;
   }
   if (g.phase === 'vendor') {
     const shopping = g.players.filter((p) => !p.vendorDone).map((p) => esc(p.name));
-    controls = `<span class="muted">Shopping on their phones: ${shopping.join(', ')}</span>`;
+    controls = `<span class="muted">Shopping at the market: ${shopping.join(', ')}</span>`;
   }
   const cab = cabById(g.cab);
   const kudos =
     g.phase === 'review' && g.kudos.length
-      ? `<div class="kudos">🎲 KUDOS DIE: ${g.kudos.map((k) => `${esc(g.players.find((p) => p.seat === k.seat)?.name)} → <b>${kudosLabel(k.face)}</b>`).join(' · ')}</div>`
+      ? `<div class="kudos">🎲 LUCKY DIE: ${g.kudos.map((k) => `${esc(g.players.find((p) => p.seat === k.seat)?.name)} → <b>${kudosLabel(k.face)}</b>`).join(' · ')}</div>`
       : '';
   return `<main class="board">
     <div class="board-main">
@@ -411,7 +411,7 @@ function finalScreen(g: Game): string {
         ? `<div class="podium-col p${[2, 1, 3][i]}">
         ${avatarBadge(p, 2.4)}
         <div class="name">${esc(p.name)}</div>
-        <div class="up">${p.up} UP</div>
+        <div class="up">${p.up} ★</div>
         <div class="block">${[2, 1, 3][i]}</div>
       </div>`
         : '<div></div>',
@@ -429,11 +429,11 @@ function finalScreen(g: Game): string {
     )
     .join('');
   return `<main class="final">
-    <h1>🏆 EMPLOYEE OF THE MONTH 🏆</h1>
+    <h1>🏆 GRAND ALCHEMIST OF THE FAIR 🏆</h1>
     <div class="podium">${podium}</div>
     <div class="awards">${aw}</div>
     <table class="standings">${rows}</table>
-    <button class="start" data-act="play-again">NEW CHANGE WINDOW ↻</button>
+    <button class="start" data-act="play-again">NEW FAIR ↻</button>
   </main>`;
 }
 

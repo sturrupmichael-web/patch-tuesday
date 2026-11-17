@@ -1,5 +1,5 @@
 /**
- * Bot strategy used by the Legacy Vendor and by dev-mode bots.
+ * Bot strategy used by the Rival Peddler and by dev-mode bots.
  * Ships once Bugs >= 5 or after 12 draws; buys randomly from affordable changes.
  * Deterministic: "random" picks are hashed from the game seed, round and seat.
  */

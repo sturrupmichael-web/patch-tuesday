@@ -1,6 +1,8 @@
 /**
  * Synthesized sound effects (no audio files to ship or license).
- * Keyboard clack, rising fan whine, pager alarm, explosion, cha-ching.
+ * Bubble plop on each ingredient, a simmer that rises as Brimstone nears the limit,
+ * a fizzing fuse plus explosion on KABOOM, coin clinks when you cork it.
+ * (Method names are kept from the engine's internal vocabulary.)
  */
 export class Sfx {
   private ctx: AudioContext | null = null;
@@ -43,16 +45,18 @@ export class Sfx {
     return g;
   }
 
+  /** Bubble plop: a sine blip whose pitch jumps up, like a bubble popping. */
   clack() {
     if (!this.ready) return;
     const ctx = this.ctx!;
-    const src = this.noise(0.06);
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.value = 2500 + Math.random() * 1500;
-    bp.Q.value = 3;
-    src.connect(bp).connect(this.env(0.5, 0.002, 0.05));
-    src.start();
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    const f = 180 + Math.random() * 120;
+    o.frequency.setValueAtTime(f, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(f * 3.2, ctx.currentTime + 0.07);
+    o.connect(this.env(0.35, 0.004, 0.09));
+    o.start();
+    o.stop(ctx.currentTime + 0.12);
   }
 
   bug() {
@@ -86,17 +90,21 @@ export class Sfx {
     src.start();
   }
 
+  /** Fizzing fuse before the boom: crackly high-passed noise that swells. */
   pager() {
     if (!this.ready) return;
     const ctx = this.ctx!;
-    for (let i = 0; i < 6; i++) {
-      const o = ctx.createOscillator();
-      o.type = 'square';
-      o.frequency.value = i % 2 ? 1800 : 2200;
-      o.connect(this.env(0.12, 0.005, 0.1, i * 0.13));
-      o.start(ctx.currentTime + i * 0.13);
-      o.stop(ctx.currentTime + i * 0.13 + 0.12);
-    }
+    const src = this.noise(0.8);
+    const hp = ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.setValueAtTime(3000, ctx.currentTime);
+    hp.frequency.linearRampToValueAtTime(7000, ctx.currentTime + 0.75);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.02, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.7);
+    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+    src.connect(hp).connect(g).connect(ctx.destination);
+    src.start();
   }
 
   explosion() {
@@ -122,7 +130,7 @@ export class Sfx {
     src.start();
   }
 
-  /** Server fan that whines higher as the worst Bug total approaches the limit. level 0..1, null = off. */
+  /** Cauldron simmer that rises in pitch as the worst Brimstone total nears the limit. level 0..1, null = off. */
   fan(level: number | null) {
     if (!this.ctx) return;
     const ctx = this.ctx;

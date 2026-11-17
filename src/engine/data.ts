@@ -1,13 +1,14 @@
 /**
- * PATCH TUESDAY game data. Everything balance-related lives here so it can be
+ * BRIMSTONE & BREW game data. Everything balance-related lives here so it can be
  * tuned without touching the rules engine.
  *
- * Glossary: Server = your board, Deployment Pipeline = your track,
- * Changes = the tiles in your Backlog (bag), Bugs = danger changes,
- * PROD DOWN = outage, SHIP IT = stop drawing, Rollback = put a Bug back,
- * Budget ($) = spending money, Uptime Points (UP) = score, Coffee = gems,
- * Tech Debt Relief = catch-up, CAB Notices = round modifiers,
- * Kudos Die = bonus die, Vendor Portal = shop.
+ * Theme glossary (player-facing word -> internal identifier, kept stable so the
+ * engine and tests did not need renaming):
+ *   Ingredient -> Change, Satchel -> backlog/pile, Cauldron + Brew Track -> position,
+ *   Brimstone -> 'bug' (danger), KABOOM -> status 'down', CORK IT -> 'ship',
+ *   Ladle (scoop out a Brimstone) -> rollback, Silver -> budget, Renown -> up,
+ *   Moonstones -> coffee, Underdog's Luck -> relief/headStart, Omens -> CAB notices,
+ *   Lucky Die -> kudos, Herb Market -> vendor phase, Stoke the Fire -> improve.
  */
 
 export type ChangeType =
@@ -25,9 +26,9 @@ export interface ChangeDef {
   name: string;
   short: string;
   color: string;
-  /** Vendor Portal price by value. Missing value = not for sale at that size. */
+  /** Herb Market price by value. Missing value = not for sale at that size. */
   prices: Partial<Record<number, number>>;
-  /** First round (1-based) in which this change is sold in the Vendor Portal. */
+  /** First round (1-based) in which this change is sold at the Herb Market. */
   unlockRound: number;
   emoji: string;
 }
@@ -35,75 +36,75 @@ export interface ChangeDef {
 export const CHANGES: Record<ChangeType, ChangeDef> = {
   bug: {
     type: 'bug',
-    name: 'Bug',
-    short: 'Adds to your Bug total. Over 7 and PROD GOES DOWN.',
-    color: '#e8e8e8',
+    name: 'Brimstone',
+    short: 'Volatile! More than 7 Brimstone in your cauldron and it goes KABOOM.',
+    color: '#e9e4d4',
     prices: {},
     unlockRound: 99,
-    emoji: '🐛',
+    emoji: '☄️',
   },
   hotfix: {
     type: 'hotfix',
-    name: 'Hotfix',
-    short: '+1 Coffee if it is your last or second-to-last change.',
-    color: '#3ddc84',
+    name: 'Dewleaf',
+    short: '+1 Moonstone if it is your last or second-to-last ingredient.',
+    color: '#5fcf80',
     prices: { 1: 4, 2: 8, 4: 14 },
     unlockRound: 1,
-    emoji: '🩹',
+    emoji: '🍃',
   },
   script: {
     type: 'script',
-    name: 'Script',
+    name: 'Carrot',
     short: 'Cheap and cheerful. No effect.',
-    color: '#ff9f1c',
+    color: '#f29b38',
     prices: { 1: 3 },
     unlockRound: 1,
-    emoji: '📜',
+    emoji: '🥕',
   },
   logreview: {
     type: 'logreview',
-    name: 'Log Review',
-    short: 'Peek at 1/2/4 changes from your backlog; deploy one or none.',
-    color: '#4ea8ff',
+    name: 'Owl Feather',
+    short: 'Peek at 1/2/4 ingredients in your satchel; add one or none.',
+    color: '#5aa6e8',
     prices: { 1: 5, 2: 10, 4: 19 },
     unlockRound: 1,
-    emoji: '🔍',
+    emoji: '🪶',
   },
   unittest: {
     type: 'unittest',
-    name: 'Unit Test',
-    short: 'If the previous change was a Bug, send that Bug back to the backlog.',
-    color: '#ffd23f',
+    name: 'Salt Crystal',
+    short: 'If the previous ingredient was Brimstone, toss that Brimstone back in the satchel.',
+    color: '#f2d257',
     prices: { 1: 5, 2: 9, 4: 18 },
     unlockRound: 1,
-    emoji: '🧪',
+    emoji: '🧂',
   },
   automation: {
     type: 'automation',
-    name: 'Automation',
-    short: '+1 extra space per Script already deployed (max +2).',
-    color: '#ff4d4d',
+    name: 'Ember Pepper',
+    short: '+1 extra space per Carrot already in the cauldron (max +2).',
+    color: '#e8513f',
     prices: { 1: 6, 2: 11, 4: 21 },
     unlockRound: 2,
-    emoji: '🤖',
+    emoji: '🌶️',
   },
   shadowit: {
     type: 'shadowit',
-    name: 'Shadow IT',
-    short: 'At review: out-shadow one neighbor = +1 space; both = +1 space and +1 Coffee.',
-    color: '#555566',
+    name: 'Shadow Plum',
+    short: 'At scoring: more than one neighbor = +1 space; more than both = +1 space and +1 Moonstone.',
+    color: '#4a3f5c',
     prices: { 1: 10 },
     unlockRound: 2,
-    emoji: '🕶️',
+    emoji: '🫐',
   },
   exec: {
     type: 'exec',
-    name: 'Exec Sponsor',
-    short: 'At review: 1 = +1 UP, 2 = +1 UP +1 Coffee, 3+ = +2 UP + free Script.',
-    color: '#b46cff',
+    name: 'Starbloom',
+    short: 'At scoring: 1 = +1 Renown, 2 = +1 Renown +1 Moonstone, 3+ = +2 Renown + a free Carrot.',
+    color: '#b77be8',
     prices: { 1: 10 },
     unlockRound: 3,
-    emoji: '👔',
+    emoji: '🌸',
   },
 };
 
@@ -112,11 +113,11 @@ export const CHANGE_TYPES = Object.keys(CHANGES) as ChangeType[];
 export const BUG_LIMIT = 7;
 export const ROUNDS = 9;
 export const MAX_SEATS = 6;
-export const ROLLBACK_RECHARGE_COST = 3; // Coffee
-export const PROCESS_IMPROVEMENT_COST = 2; // Coffee
+export const ROLLBACK_RECHARGE_COST = 3; // Moonstones (restore the Ladle)
+export const PROCESS_IMPROVEMENT_COST = 2; // Moonstones (Stoke the Fire)
 export const MAX_START_POS = 12;
-export const BUDGET_PER_UP = 5; // final conversion
-export const COFFEE_PER_UP = 2; // final conversion
+export const BUDGET_PER_UP = 5; // final conversion: Silver per Renown
+export const COFFEE_PER_UP = 2; // final conversion: Moonstones per Renown
 export const MAX_PURCHASES = 2;
 
 export const STARTING_BACKLOG: Array<{ type: ChangeType; value: number }> = [
@@ -139,7 +140,7 @@ export interface PipelineSpace {
 
 const COFFEE_SPACES = new Set([5, 9, 13, 16, 20, 24, 27, 31]);
 
-/** 34 spaces (0..33). Budget and UP both climb along the pipeline. */
+/** The Brew Track: 34 spaces (0..33). Silver and Renown both climb along it. */
 export const PIPELINE: PipelineSpace[] = Array.from({ length: 34 }, (_, i) => ({
   budget: i + Math.floor(i / 6),
   up: Math.floor((i * i) / 110 + i / 5),
@@ -147,7 +148,7 @@ export const PIPELINE: PipelineSpace[] = Array.from({ length: 34 }, (_, i) => ({
 }));
 export const LAST_SPACE = PIPELINE.length - 1;
 
-/** Tech Debt Relief icons on the UP scoring track. */
+/** Underdog's Luck icons on the Renown scoring track. */
 export const RELIEF_ICONS: number[] = [
   2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 23, 26, 29, 32, 35, 38, 42, 46, 50, 55, 60, 65, 70, 80, 90,
 ];
@@ -170,17 +171,17 @@ export const KUDOS_DIE: KudosFace[] = [
 export function kudosLabel(f: KudosFace): string {
   switch (f.kind) {
     case 'up':
-      return `+${f.amount} UP`;
+      return `+${f.amount} ★`;
     case 'coffee':
-      return `+${f.amount} ☕`;
+      return `+${f.amount} 💎`;
     case 'budget':
-      return `+$${f.amount}`;
+      return `+${f.amount} 🪙`;
     case 'script':
-      return 'Free Script';
+      return 'Free Carrot';
   }
 }
 
-/** Round modifiers a CAB Notice can set. Defaults in DEFAULT_MODS. */
+/** Night modifiers an Omen can set. Defaults in DEFAULT_MODS. */
 export interface RoundMods {
   bugLimit: number;
   firstChangeDouble: boolean;
@@ -228,27 +229,27 @@ export interface CabNotice {
 }
 
 export const CAB_NOTICES: CabNotice[] = [
-  { id: 'readonly-friday', title: 'Read-Only Friday', text: "Everyone's first change this window moves double.", mods: { firstChangeDouble: true } },
-  { id: 'audit-season', title: 'Audit Season', text: 'Everyone gains 1 Coffee for surviving the auditors.', instant: 'coffeeAll' },
-  { id: 'vendor-sale', title: 'Vendor Sale', text: 'All changes cost $2 less in the Vendor Portal this round.', mods: { priceDiscount: 2 } },
-  { id: 'change-freeze', title: 'Change Freeze', text: 'Drawing your 2nd Bug worth 3 auto-ships you on the spot, even if prod would have gone down.', mods: { freezeOn3s: true } },
-  { id: 'pizza', title: 'Pizza in the Break Room', text: 'The player(s) in last place gain 1 Coffee.', instant: 'coffeeLast' },
-  { id: 'blameless-postmortem', title: 'Blameless Postmortem', text: 'If prod goes down you keep BOTH the Budget and the UP this window.', mods: { downTakesBoth: true } },
-  { id: 'load-test', title: 'Load Test Passed', text: 'Prod can take it: the Bug limit is 9 this window.', mods: { bugLimit: 9 } },
-  { id: 'pager-storm', title: 'Pager Storm', text: 'Bug limit is 6 this window, but everyone starts 2 spaces ahead.', mods: { bugLimit: 6, startBonus: 2 } },
-  { id: 'hackathon', title: 'Hackathon', text: 'Everyone adds a free Script to their backlog.', instant: 'scriptAll' },
-  { id: 'budget-cuts', title: 'Budget Cuts', text: 'Everyone earns $3 less Budget this window.', mods: { budgetDelta: -3 } },
-  { id: 'espresso', title: 'Espresso Machine Fixed', text: "Everyone's Rollback is recharged for free.", instant: 'rechargeAll' },
-  { id: 'stakeholder-demo', title: 'Stakeholder Demo', text: 'The Kudos Die is rolled twice this window.', mods: { kudosRolls: 2 } },
-  { id: 'reorg', title: 'Surprise Reorg', text: 'Everyone starts 1 space ahead this window.', mods: { startBonus: 1 } },
-  { id: 'legacy-migration', title: 'Legacy Migration', text: 'Scripts move 1 extra space this window.', mods: { scriptBonus: 1 } },
-  { id: 'compliance', title: 'Compliance Review', text: 'Players with no Shadow IT deployed gain 1 UP at review.', mods: { complianceBonus: true } },
-  { id: 'sprint-retro', title: 'Sprint Retro', text: 'Players who SHIP IT with 4 or fewer Bug points gain 2 UP.', mods: { retroBonus: true } },
-  { id: 'exec-visit', title: 'Executive Site Visit', text: 'Exec Sponsors count one extra at review (if you deployed any).', mods: { execBonus: 1 } },
-  { id: 'bonus-season', title: 'Bonus Season', text: 'Everyone earns $4 extra Budget this window.', mods: { budgetDelta: 4 } },
-  { id: 'holiday-freeze', title: 'Holiday Code Freeze', text: 'Hotfixes earn Coffee if they are among your last 3 changes.', mods: { hotfixWindow: 3 } },
-  { id: 'works-on-my-machine', title: 'Works On My Machine', text: 'Your first Bug this window counts as 0. It still moves you.', mods: { firstBugFree: true } },
-  { id: 'debt-sprint', title: 'Tech Debt Sprint', text: 'Tech Debt Relief is doubled this window.', mods: { reliefMultiplier: 2 } },
+  { id: 'readonly-friday', title: 'Bubbling Start', text: "Everyone's first ingredient tonight moves double.", mods: { firstChangeDouble: true } },
+  { id: 'audit-season', title: 'Meteor Shower', text: 'Everyone finds a Moonstone in the grass.', instant: 'coffeeAll' },
+  { id: 'vendor-sale', title: 'Haggling Day', text: 'Ingredients cost 2 Silver less at the Herb Market tonight.', mods: { priceDiscount: 2 } },
+  { id: 'change-freeze', title: 'Calm Winds', text: 'Your 2nd Brimstone worth 3 corks your cauldron on the spot, even if it would have blown.', mods: { freezeOn3s: true } },
+  { id: 'pizza', title: 'Kindly Stranger', text: 'The brewer(s) in last place gain 1 Moonstone.', instant: 'coffeeLast' },
+  { id: 'blameless-postmortem', title: 'Forgiving Crowd', text: 'If your cauldron explodes you keep BOTH the Silver and the Renown tonight.', mods: { downTakesBoth: true } },
+  { id: 'load-test', title: 'Iron Cauldrons', text: 'Cauldrons are sturdy tonight: the Brimstone limit is 9.', mods: { bugLimit: 9 } },
+  { id: 'pager-storm', title: 'Thunderstorm', text: 'Brimstone limit is 6 tonight, but everyone starts 2 spaces ahead.', mods: { bugLimit: 6, startBonus: 2 } },
+  { id: 'hackathon', title: 'Bumper Harvest', text: 'Everyone adds a free Carrot to their satchel.', instant: 'scriptAll' },
+  { id: 'budget-cuts', title: 'Tax Collector', text: 'Everyone earns 3 Silver less tonight.', mods: { budgetDelta: -3 } },
+  { id: 'espresso', title: 'The Ladle Smith', text: "Everyone's Ladle is restored for free.", instant: 'rechargeAll' },
+  { id: 'stakeholder-demo', title: 'Royal Visit', text: 'The Lucky Die is rolled twice tonight.', mods: { kudosRolls: 2 } },
+  { id: 'reorg', title: 'Warm Embers', text: 'Everyone starts 1 space ahead tonight.', mods: { startBonus: 1 } },
+  { id: 'legacy-migration', title: 'Carrot Festival', text: 'Carrots move 1 extra space tonight.', mods: { scriptBonus: 1 } },
+  { id: 'compliance', title: 'Guild Inspection', text: 'Brewers with no Shadow Plums in the cauldron gain 1 Renown at scoring.', mods: { complianceBonus: true } },
+  { id: 'sprint-retro', title: 'Steady Hands', text: 'Brewers who CORK IT with 4 or less Brimstone gain 2 Renown.', mods: { retroBonus: true } },
+  { id: 'exec-visit', title: 'Full Bloom', text: 'Starblooms count one extra at scoring (if you added any).', mods: { execBonus: 1 } },
+  { id: 'bonus-season', title: 'Generous Patron', text: 'Everyone earns 4 extra Silver tonight.', mods: { budgetDelta: 4 } },
+  { id: 'holiday-freeze', title: 'Morning Dew', text: 'Dewleaf earns a Moonstone if it is among your last 3 ingredients.', mods: { hotfixWindow: 3 } },
+  { id: 'works-on-my-machine', title: "Beginner's Luck", text: 'Your first Brimstone tonight counts as 0. It still moves you.', mods: { firstBugFree: true } },
+  { id: 'debt-sprint', title: 'Underdog Night', text: "Underdog's Luck is doubled tonight.", mods: { reliefMultiplier: 2 } },
 ];
 
 export interface AvatarDef {
@@ -259,14 +260,14 @@ export interface AvatarDef {
 }
 
 export const AVATARS: AvatarDef[] = [
-  { id: 'helpdesk', name: 'Help Desk Hero', emoji: '🦸', color: '#3ddc84' },
-  { id: 'netwizard', name: 'Network Wizard', emoji: '🧙', color: '#4ea8ff' },
-  { id: 'dba', name: 'DBA', emoji: '🗄️', color: '#ffd23f' },
-  { id: 'goblin', name: 'Security Goblin', emoji: '👺', color: '#ff4d4d' },
-  { id: 'cloud', name: 'Cloud Architect', emoji: '☁️', color: '#b46cff' },
-  { id: 'intern', name: 'Intern', emoji: '🐣', color: '#ff9f1c' },
+  { id: 'helpdesk', name: 'Herbalist', emoji: '🌿', color: '#5fcf80' },
+  { id: 'netwizard', name: 'Hedge Wizard', emoji: '🧙', color: '#5aa6e8' },
+  { id: 'dba', name: 'Alchemist', emoji: '⚗️', color: '#f2d257' },
+  { id: 'goblin', name: 'Swamp Hag', emoji: '🐸', color: '#e8513f' },
+  { id: 'cloud', name: 'Star Seer', emoji: '🔮', color: '#b77be8' },
+  { id: 'intern', name: 'Apprentice', emoji: '🐣', color: '#f29b38' },
 ];
-export const VENDOR_AVATAR: AvatarDef = { id: 'vendor', name: 'Legacy Vendor', emoji: '🦖', color: '#9a9a9a' };
+export const VENDOR_AVATAR: AvatarDef = { id: 'vendor', name: 'Rival Peddler', emoji: '🦝', color: '#a89a86' };
 export const BOT_AVATAR: AvatarDef = { id: 'bot', name: 'Bot', emoji: '🤖', color: '#7fd1b9' };
 
 export function avatarById(id: string): AvatarDef {
