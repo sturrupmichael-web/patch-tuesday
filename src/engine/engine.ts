@@ -732,7 +732,7 @@ export function awards(g: Game): Award[] {
     const best = [...g.players].sort((a, b) => score(b) - score(a))[0];
     if (best && score(best) >= min) out.push({ title, seat: best.seat, detail: detail(best) });
   };
-  pick('Most Outages 🔥', (p) => p.stats.outages, (p) => `${p.stats.outages} times prod went down`);
+  pick('Most Outages 🔥', (p) => p.stats.outages, (p) => `prod went down ${p.stats.outages} time${p.stats.outages === 1 ? '' : 's'}`);
   pick('Biggest Single Deploy 🚀', (p) => p.stats.biggestDeploy, (p) => `reached space ${p.stats.biggestDeploy}`);
   pick('Coffee Hoarder ☕', (p) => p.stats.maxCoffee, (p) => `held ${p.stats.maxCoffee} ☕ at once`);
   pick('Friday Deployer 📅', (p) => p.stats.riskiestShip, (p) => `shipped with ${p.stats.riskiestShip} Bug points`, 0);
