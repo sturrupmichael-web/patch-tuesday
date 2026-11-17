@@ -18,7 +18,8 @@ require('fs').mkdirSync(SHOTS, { recursive: true });
   console.log('room', code);
   const phones = [];
   for (const [name, av] of [['Dana', 'goblin'], ['Mike', 'intern']]) {
-    const p = await ctx.newPage();
+    // In Supabase mode each phone needs its own browser profile (own localStorage seat token).
+    const p = process.env.SEPARATE_PHONES ? await (await browser.newContext()).newPage() : await ctx.newPage();
     await p.setViewportSize({ width: 390, height: 844 });
     p.on('pageerror', (e) => errors.push(name + ': ' + e.message));
     await p.goto(BASE + '/?code=' + code);

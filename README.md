@@ -40,6 +40,7 @@ npm install
 npm run dev        # http://localhost:5173/patch-tuesday/host/  and  /patch-tuesday/
 npm test           # rules-engine unit tests (vitest)
 npm run e2e        # full 9-round browser smoke test (needs `npm run dev` running and `npx playwright` available)
+                   # with Supabase env vars set, run it as `SEPARATE_PHONES=1 npm run e2e`
 npm run build      # type-check + static build into dist/
 ```
 
