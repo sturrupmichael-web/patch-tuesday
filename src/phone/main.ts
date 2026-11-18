@@ -1,5 +1,5 @@
 import '../styles/phone.css';
-import { cabById, shopItems, standings, validateBuy } from '../engine/engine';
+import { cabById, explodeChance, shopItems, standings, totalRounds, validateBuy } from '../engine/engine';
 import {
   AVATARS,
   CHANGES,
@@ -7,7 +7,6 @@ import {
   PIPELINE,
   PROCESS_IMPROVEMENT_COST,
   ROLLBACK_RECHARGE_COST,
-  ROUNDS,
   avatarById,
   type ChangeType,
 } from '../engine/data';
@@ -72,6 +71,9 @@ let form = {
 };
 let joinError = '';
 let shopOpenType: ChangeType | null = null;
+/** Double-tap guard: ignore STIR IN until the host answers the last draw (or 1.5 s pass). */
+let drawLock: { draws: number; until: number } | null = null;
+const HOST_LOST_MS = 10000;
 
 function connect(room: string, join: boolean) {
   session?.transport.close();
@@ -111,6 +113,10 @@ function connect(room: string, join: boolean) {
     if (join) send({ type: 'join', name: form.name, avatar: form.avatar });
   });
   draw();
+}
+
+function myPlayer(): Player | undefined {
+  return session?.state?.game.players.find((p) => p.key === session!.key) as Player | undefined;
 }
 
 function send(msg: PhoneMsg) {
@@ -187,10 +193,15 @@ app.addEventListener('click', (ev) => {
     case 'avatar':
       form.avatar = t.dataset.id!;
       break;
-    case 'draw':
+    case 'draw': {
+      const me = myPlayer();
+      if (!me) break;
+      if (drawLock && drawLock.draws === me.draws && Date.now() < drawLock.until) break;
+      drawLock = { draws: me.draws, until: Date.now() + 1500 };
       vibrate(15);
-      send({ type: 'draw' });
+      send({ type: 'draw', expectDraws: me.draws });
       break;
+    }
     case 'ship':
       vibrate(40);
       send({ type: 'ship' });
@@ -255,11 +266,14 @@ function draw() {
       ),
     );
   }
-  const stale = Date.now() - s.lastStateAt > 12000;
+  const stale = Date.now() - s.lastStateAt > HOST_LOST_MS;
   const g = s.state.game as unknown as Game;
   const me = g.players.find((p) => p.key === s.key);
   const body = me ? playerScreen(g, me, s) : spectator(g);
-  render(app, (stale ? `<div class="stale">📡 Lost contact with the host… retrying</div>` : '') + body);
+  const waitOverlay = stale
+    ? `<div class="host-wait"><div class="boom">⏳</div><h2>Waiting for the host…</h2><p class="muted">The big screen went quiet (laptop asleep or Wi-Fi blip?). Your seat is saved; the game picks up right where it left off.</p></div>`
+    : '';
+  render(app, body + waitOverlay);
 }
 
 function notice(title: string, sub: string, back: boolean): string {
@@ -289,7 +303,7 @@ function joinScreen(): string {
 function topbar(g: Game, me: Player): string {
   return `<div class="ptop">${avatarBadge(me)} <b>${esc(me.name)}</b>
     <span class="stats"><span>${me.up}★</span><span>${me.coffee}💎</span>${g.phase === 'vendor' ? `<span>${me.budget}🪙</span>` : ''}</span>
-    <span class="round">${g.round ? `${g.round}/${ROUNDS}` : ''}</span></div>`;
+    <span class="round">${g.round ? `${g.round}/${totalRounds(g)}` : ''}</span></div>`;
 }
 
 function playerScreen(g: Game, me: Player, s: Session): string {
@@ -298,7 +312,13 @@ function playerScreen(g: Game, me: Player, s: Session): string {
     case 'lobby':
       main = `<div class="screen center">${avatarBadge(me, 3)}<h2>Your stall is set up!</h2>
         <p class="muted">${esc(avatarById(me.avatar).name)} · waiting for the host to start.</p>
-        <p class="muted">${g.players.length} player${g.players.length === 1 ? '' : 's'} in the room</p></div>`;
+        <p class="muted">${g.players.length} player${g.players.length === 1 ? '' : 's'} in the room · ${totalRounds(g)} nights</p>
+        <div class="howto-p"><b>How to play</b>
+          <p>🥄 <b>Stir in</b> ingredients to climb the Brew Track.</p>
+          <p>☄️ More than ${g.mods.bugLimit} <b>Brimstone</b> and your cauldron goes KABOOM.</p>
+          <p>🍾 <b>Cork it</b> while you're ahead, then shop at the Herb Market.</p>
+          <p>★ Most Renown after the last night wins.</p>
+        </div></div>`;
       break;
     case 'cab': {
       const cab = cabById(g.cab);
@@ -370,11 +390,20 @@ function deploying(g: Game, me: Player, s: Session): string {
     .map((c) => `<span class="pk">${chipHtml(c, 'xs')}×${c.n}</span>`)
     .join('');
   const ratio = me.bugTotal / g.mods.bugLimit;
+  const odds = Math.round(explodeChance(g, me) * 100);
+  const oddsClass = odds >= 40 ? 'hot' : odds >= 15 ? 'warm' : 'cool';
+  const locked = !!drawLock && drawLock.draws === me.draws && Date.now() < drawLock.until;
+  const hint =
+    g.round === 1 && me.draws < 3
+      ? `<div class="hint">Tap <b>STIR IN</b> to add a random ingredient from your satchel. <b>CORK IT</b> before your Brimstone passes ${g.mods.bugLimit}!</div>`
+      : '';
   return `<div class="screen deploy ${ratio >= 0.7 ? 'hot' : ''}">
     <div class="row">${bugGauge(g, me)}${timer !== null ? `<div class="ptimer ${timer <= 10 ? 'hot' : ''}">${timer}s</div>` : ''}</div>
+    <div class="odds ${oddsClass}">💥 ${odds}% chance the next ingredient blows your cauldron</div>
     ${spaceInfo}
+    ${hint}
     <div class="last">${last ? `${chipHtml(last)}<div><div class="muted">Last ingredient</div><b>${esc(CHANGES[last.type].name)} ${last.value}</b></div>` : '<div class="muted">The cauldron is empty. Feeling lucky?</div>'}</div>
-    <button class="deploy-btn" data-act="draw">STIR IN 🥄</button>
+    <button class="deploy-btn ${locked ? 'locked' : ''}" data-act="draw">STIR IN 🥄</button>
     <div class="row2">
       <button class="ship-btn" data-act="ship">CORK IT 🍾</button>
       ${canRollback ? `<button class="rollback-btn" data-act="rollback">🥄 LADLE OUT</button>` : ''}
@@ -456,7 +485,7 @@ function finalScreen(g: Game, me: Player): string {
 function spectator(g: Game): string {
   return `<div class="screen center"><div class="logo">BRIMSTONE <span>&amp;</span> BREW</div>
     <h2>👀 Spectator mode</h2>
-    ${g.phase === 'lobby' ? `<p class="muted">The game hasn't started yet.</p><button class="big" data-act="rejoin">JOIN AS ${esc(form.name || '…')}</button>` : `<p class="muted">The fair already started. You're watching night ${g.round}/${ROUNDS}.</p>`}
+    ${g.phase === 'lobby' ? `<p class="muted">The game hasn't started yet.</p><button class="big" data-act="rejoin">JOIN AS ${esc(form.name || '…')}</button>` : `<p class="muted">The fair already started. You're watching night ${g.round}/${totalRounds(g)}.</p>`}
     ${leaderboard(g)}
     <button class="ghost" data-act="leave">Back</button></div>`;
 }

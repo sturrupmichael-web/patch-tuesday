@@ -109,6 +109,7 @@ src/net/      Wire protocol + transport (Supabase Realtime, or BroadcastChannel 
 src/host/     Host controller (authoritative game loop, bots, timer) + host UI + synth audio
 src/phone/    Thin phone controller UI
 tests/        Vitest unit tests for the engine
+docs/         PLAYTEST.md: the real-phone checklist
 ```
 
 - **Host-authoritative.** Phones send `action` messages `{ token, msg }`. The host

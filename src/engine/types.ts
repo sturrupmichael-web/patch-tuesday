@@ -80,6 +80,8 @@ export type Phase = 'lobby' | 'cab' | 'deploying' | 'review' | 'vendor' | 'final
 export interface Settings {
   /** Seconds, 0 = no timer. */
   deployTimer: number;
+  /** Nights in a game: 9 (full) or 6 (quick). */
+  rounds: number;
   legacyVendor: boolean;
   sound: boolean;
 }
@@ -133,11 +135,14 @@ export type Action =
   | { type: 'settings'; settings: Partial<Settings> }
   | { type: 'start'; seed?: number }
   | { type: 'beginDeploy'; now: number }
-  | { type: 'draw'; seat: number }
+  /** expectDraws: how many draws the phone had seen; a stale value (double tap) is rejected. */
+  | { type: 'draw'; seat: number; expectDraws?: number }
   | { type: 'ship'; seat: number }
   | { type: 'rollback'; seat: number }
   | { type: 'logReviewPick'; seat: number; index: number | null }
   | { type: 'timeout' }
+  /** Host was asleep/paused: push the brewing deadline back by ms. */
+  | { type: 'shiftDeadline'; ms: number }
   | { type: 'chooseScore'; seat: number; pick: 'budget' | 'up' }
   | { type: 'toVendor' }
   | { type: 'buy'; seat: number; changeType: ChangeType; value: number }

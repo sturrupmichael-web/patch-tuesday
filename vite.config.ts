@@ -5,6 +5,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   base: process.env.VITE_BASE ?? '/patch-tuesday/',
   build: {
+    target: 'es2022', // the host uses top-level await to pick a free room code
     rollupOptions: {
       input: {
         phone: resolve(__dirname, 'index.html'),

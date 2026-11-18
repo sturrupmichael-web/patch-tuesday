@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  explodeChance,
+  totalRounds,
   createGame,
   reduce,
   tryReduce,
@@ -537,5 +539,57 @@ describe('full game with bots', () => {
     const g = reduce(deploying(), { type: 'timeout' });
     expect(g.phase).toBe('review');
     expect(g.players.every((p) => p.status === 'shipped')).toBe(true);
+  });
+});
+
+describe('batch 1: game-night fixes', () => {
+  it('a stale draw (double tap) is rejected; a matching one goes through', () => {
+    let g = setPile(deploying(), 0, [chip('script', 1), chip('script', 1), chip('script', 1)]);
+    g = reduce(g, { type: 'draw', seat: 0, expectDraws: 0 });
+    expect(g.players[0].draws).toBe(1);
+    expect(tryReduce(g, { type: 'draw', seat: 0, expectDraws: 0 }).error).toMatch(/One ingredient per tap/);
+    g = reduce(g, { type: 'draw', seat: 0, expectDraws: 1 });
+    expect(g.players[0].draws).toBe(2);
+  });
+
+  it('explosion odds count only Brimstone that would push past the limit', () => {
+    const g = deploying();
+    const p = { pile: [chip('bug', 1), chip('bug', 3), chip('script', 1), chip('hotfix', 2)], bugTotal: 5, firstBugSeen: true };
+    expect(explodeChance(g, p)).toBe(0.25); // only the 3 blows (5+3 > 7)
+    expect(explodeChance(g, { ...p, bugTotal: 7 })).toBe(0.5);
+    expect(explodeChance(g, { ...p, bugTotal: 0 })).toBe(0);
+    expect(explodeChance(g, { ...p, pile: [] })).toBe(0);
+    const lucky = { ...g, mods: { ...g.mods, firstBugFree: true } };
+    expect(explodeChance(lucky, { ...p, bugTotal: 7, firstBugSeen: false })).toBe(0);
+  });
+
+  it('quick game: 6 nights, set only in the lobby', () => {
+    let g = createGame(5, { legacyVendor: false, deployTimer: 0 });
+    g = reduce(g, { type: 'settings', settings: { rounds: 6 } });
+    expect(tryReduce(g, { type: 'settings', settings: { rounds: 7 } }).error).toBeTruthy();
+    g = reduce(g, { type: 'addBot', bot: 'dev' });
+    g = reduce(g, { type: 'addBot', bot: 'dev' });
+    g = reduce(g, { type: 'start' });
+    expect(totalRounds(g)).toBe(6);
+    expect(g.cabDeck).toHaveLength(5);
+    expect(tryReduce(g, { type: 'settings', settings: { rounds: 9 } }).error).toBeTruthy();
+    let guard = 0;
+    while (g.phase !== 'final' && guard++ < 5000) {
+      if (g.phase === 'cab') g = reduce(g, { type: 'beginDeploy', now: 0 });
+      else if (g.phase === 'review' && !g.players.some((p) => p.pendingScoreChoice)) g = reduce(g, { type: 'toVendor' });
+      else g = reduce(g, g.players.map((p) => botAction(g, p.seat)).find(Boolean) as Action);
+    }
+    expect(g.round).toBe(6);
+  });
+
+  it('a sleeping host pushes the brewing deadline back instead of timing everyone out', () => {
+    let g = createGame(1, { legacyVendor: false, deployTimer: 90 });
+    g = reduce(g, { type: 'join', key: 'a', name: 'A', avatar: 'dba' });
+    g = reduce(g, { type: 'join', key: 'b', name: 'B', avatar: 'dba' });
+    g = reduce(g, { type: 'start' });
+    g = reduce(g, { type: 'beginDeploy', now: 1000 });
+    expect(g.deployDeadline).toBe(91000);
+    g = reduce(g, { type: 'shiftDeadline', ms: 300000 });
+    expect(g.deployDeadline).toBe(391000);
   });
 });

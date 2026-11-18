@@ -25,6 +25,7 @@ export class HostController {
   private broadcastTimer: number | null = null;
   private stateVersion = 0;
   private lastBotTick = 0;
+  private lastTickAt = Date.now();
 
   constructor(
     readonly room: string,
@@ -39,6 +40,26 @@ export class HostController {
     window.addEventListener('beforeunload', () => {
       this.transport.send('closed', {});
     });
+  }
+
+  /**
+   * Pick a room code nobody else is hosting: probe the channel and listen for
+   * another host's state broadcast before claiming it.
+   */
+  static async findFreeRoom(make: () => string, tries = 5): Promise<string> {
+    let code = make();
+    for (let i = 0; i < tries; i++) {
+      const t = createTransport(code);
+      let taken = false;
+      t.on('state', () => (taken = true));
+      await Promise.race([t.ready, new Promise((r) => setTimeout(r, 4000))]);
+      t.send('action', { token: `probe-${Math.random().toString(36).slice(2)}`, msg: { type: 'hello' } });
+      await new Promise((r) => setTimeout(r, 1200));
+      t.close();
+      if (!taken) return code;
+      code = make();
+    }
+    return code;
   }
 
   static restore(): { room: string; game: Game } | null {
@@ -98,6 +119,12 @@ export class HostController {
       const seat = player.seat;
       switch (msg.type) {
         case 'draw':
+          action = {
+            type: 'draw',
+            seat,
+            expectDraws: typeof msg.expectDraws === 'number' ? msg.expectDraws : undefined,
+          };
+          break;
         case 'ship':
         case 'rollback':
         case 'recharge':
@@ -145,8 +172,18 @@ export class HostController {
   }
 
   private tick() {
-    const g = this.game;
     const now = Date.now();
+    // If the laptop slept (or the tab was frozen), pause the clock instead of
+    // timing everyone out: push the brewing deadline and phase timers back.
+    const gap = now - this.lastTickAt;
+    this.lastTickAt = now;
+    if (gap > 5000) {
+      this.phaseSince += gap;
+      this.lastSeen.forEach((t, k) => this.lastSeen.set(k, t + gap));
+      if (this.game.deployDeadline) this.dispatch({ type: 'shiftDeadline', ms: gap });
+      this.broadcast();
+    }
+    const g = this.game;
 
     // Phones that stopped sending heartbeats.
     for (const p of g.players) {
