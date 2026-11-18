@@ -735,3 +735,24 @@ select {
   padding: 0.35em 0.8em;
   border-bottom: 1px solid var(--line);
 }
+
+.howto {
+  text-align: left;
+  margin-top: 1em;
+  background: var(--panel2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.6em 1em;
+  font-size: 0.95em;
+}
+.howto summary {
+  font-family: var(--mono);
+  color: var(--amber);
+  cursor: pointer;
+}
+.howto ol {
+  margin: 0.5em 0 0;
+  padding-left: 1.3em;
+  display: grid;
+  gap: 0.35em;
+}

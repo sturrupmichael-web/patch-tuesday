@@ -450,3 +450,59 @@ input:focus {
   transform: none;
   visibility: visible;
 }
+
+.odds {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+.odds.cool {
+  color: var(--green);
+}
+.odds.warm {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+.odds.hot {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--red);
+  animation: blink 0.8s steps(2) infinite;
+}
+.hint {
+  background: rgba(127, 182, 255, 0.12);
+  border: 1px solid var(--blue);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+.deploy-btn.locked {
+  opacity: 0.6;
+  transform: translateY(6px);
+}
+.howto-p {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 15px;
+}
+.howto-p p {
+  margin: 6px 0 0;
+}
+.host-wait {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  background: rgba(18, 13, 28, 0.94);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+}

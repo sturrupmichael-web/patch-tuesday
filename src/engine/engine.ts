@@ -39,7 +39,13 @@ import {
   type Settings,
 } from './types';
 
-export const DEFAULT_SETTINGS: Settings = { deployTimer: 90, legacyVendor: true, sound: true };
+export const DEFAULT_SETTINGS: Settings = { deployTimer: 90, legacyVendor: true, sound: true, rounds: ROUNDS };
+export const ROUND_OPTIONS = [6, ROUNDS];
+
+/** Nights in this game (older saved games have no setting: full length). */
+export function totalRounds(g: Pick<Game, 'settings'>): number {
+  return g.settings.rounds ?? ROUNDS;
+}
 
 export function createGame(seed: number, settings: Partial<Settings> = {}): Game {
   return {
@@ -542,6 +548,11 @@ function apply(g: Game, a: Action, rng: Rng) {
     case 'settings': {
       const s = a.settings;
       if (s.deployTimer !== undefined) g.settings.deployTimer = Math.max(0, Math.min(600, Math.round(s.deployTimer)));
+      if (s.rounds !== undefined) {
+        requirePhase(g, 'lobby');
+        if (!ROUND_OPTIONS.includes(s.rounds)) throw new RuleError('Unsupported game length');
+        g.settings.rounds = s.rounds;
+      }
       if (s.legacyVendor !== undefined) g.settings.legacyVendor = !!s.legacyVendor;
       if (s.sound !== undefined) g.settings.sound = !!s.sound;
       return;
@@ -560,7 +571,7 @@ function apply(g: Game, a: Action, rng: Rng) {
       if (!wantVendor) g.players = g.players.filter((p) => p.bot !== 'vendor');
       if (g.players.length < 2) throw new RuleError('Need at least 2 brewers (add a bot in dev mode)');
       g.players.sort((x, y) => x.seat - y.seat);
-      g.cabDeck = rng.shuffle(CAB_NOTICES.map((c) => c.id)).slice(0, ROUNDS);
+      g.cabDeck = rng.shuffle(CAB_NOTICES.map((c) => c.id)).slice(0, totalRounds(g));
       startRound(g, rng);
       return;
     }
@@ -576,6 +587,7 @@ function apply(g: Game, a: Action, rng: Rng) {
       const p = getPlayer(g, a.seat);
       if (p.status !== 'deploying') throw new RuleError('Your cauldron is not on the fire');
       if (p.pendingLogReview) throw new RuleError('Finish your Owl Feather peek first');
+      if (a.expectDraws !== undefined && a.expectDraws !== p.draws) throw new RuleError('Easy there! One ingredient per tap.');
       if (p.pile.length === 0) {
         ship(g, p, 'emptied the satchel and CORKED IT 🍾');
       } else {
@@ -631,6 +643,10 @@ function apply(g: Game, a: Action, rng: Rng) {
       ev(g, 'rollback', p.seat, `${p.name} ladled out a Brimstone ${last.value} 🥄`);
       return;
     }
+    case 'shiftDeadline': {
+      if (g.deployDeadline !== null && a.ms > 0) g.deployDeadline += Math.round(a.ms);
+      return;
+    }
     case 'timeout': {
       requirePhase(g, 'deploying');
       g.players.filter((p) => p.status === 'deploying').forEach((p) => ship(g, p, 'ran out of time and auto-SHIPPED ⏰'));
@@ -658,7 +674,7 @@ function apply(g: Game, a: Action, rng: Rng) {
     case 'toVendor': {
       requirePhase(g, 'review');
       if (g.players.some((p) => p.pendingScoreChoice)) throw new RuleError('Waiting on exploded brewers to choose');
-      if (g.round >= ROUNDS) {
+      if (g.round >= totalRounds(g)) {
         finalize(g);
         return;
       }
@@ -741,4 +757,15 @@ export function awards(g: Game): Award[] {
 
 export function bugsInPile(p: Player): number {
   return p.pile.filter((c) => c.type === 'bug').reduce((s, c) => s + c.value, 0);
+}
+
+/**
+ * Chance (0..1) that the next ingredient drawn makes this cauldron explode,
+ * from what is left in the satchel. Shown on the phone to sharpen the gamble.
+ */
+export function explodeChance(g: Pick<Game, 'mods'>, p: Pick<Player, 'pile' | 'bugTotal' | 'firstBugSeen'>): number {
+  if (p.pile.length === 0) return 0;
+  const freeFirst = g.mods.firstBugFree && !p.firstBugSeen;
+  const blowers = p.pile.filter((c) => c.type === 'bug' && !freeFirst && p.bugTotal + c.value > g.mods.bugLimit).length;
+  return blowers / p.pile.length;
 }

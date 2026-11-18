@@ -31,7 +31,7 @@ export function isRoomCode(s: string): boolean {
 export type PhoneMsg =
   | { type: 'hello' }
   | { type: 'join'; name: string; avatar: string }
-  | { type: 'draw' }
+  | { type: 'draw'; expectDraws?: number }
   | { type: 'ship' }
   | { type: 'rollback' }
   | { type: 'logReviewPick'; index: number | null }

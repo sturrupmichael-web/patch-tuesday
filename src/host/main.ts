@@ -1,12 +1,11 @@
 import QRCode from 'qrcode';
 import '../styles/host.css';
-import { awards, cabById, createGame, reduce, standings } from '../engine/engine';
+import { awards, cabById, createGame, reduce, standings, totalRounds } from '../engine/engine';
 import {
   CHANGES,
   LAST_SPACE,
   MAX_SEATS,
   PIPELINE,
-  ROUNDS,
   avatarById,
   kudosLabel,
 } from '../engine/data';
@@ -22,7 +21,7 @@ const DEV = params.has('dev');
 const sfx = new Sfx();
 
 const restored = HostController.restore();
-const room = restored?.room ?? makeRoomCode();
+const room = restored?.room ?? (await HostController.findFreeRoom(makeRoomCode));
 const host = new HostController(room, restored?.game);
 if (!restored && params.has('seed')) {
   host.game = { ...host.game, seed: Number(params.get('seed')) >>> 0, rng: Number(params.get('seed')) >>> 0 };
@@ -155,6 +154,7 @@ app.addEventListener('click', (ev) => {
 app.addEventListener('change', (ev) => {
   const t = ev.target as HTMLSelectElement;
   if (t.dataset.act === 'timer') host.updateSettings({ deployTimer: Number(t.value) });
+  if (t.dataset.act === 'rounds') host.updateSettings({ rounds: Number(t.value) });
 });
 
 function alertBox(msg: string) {
@@ -217,7 +217,7 @@ function header(g: Game): string {
   return `<header class="topbar">
     <div class="brand">BRIMSTONE <span>&amp;</span> BREW</div>
     <div class="status">
-      ${g.round ? `<span class="pill">NIGHT ${g.round}/${ROUNDS}</span>` : ''}
+      ${g.round ? `<span class="pill">NIGHT ${g.round}/${totalRounds(g)}</span>` : ''}
       <span class="pill phase-${g.phase}">${PHASE_LABEL[g.phase]}</span>
       ${timer !== null ? `<span class="pill timer ${timer <= 10 ? 'hot' : ''}">⏱ ${timer}s</span>` : ''}
     </div>
@@ -249,15 +249,22 @@ function lobby(g: Game): string {
       <div class="url">${esc(joinUrl.replace(/^https?:\/\//, '').replace(/\?code=.*/, ''))}</div>
       <div class="code">${room}</div>
       <div class="qr">${qrSvg}</div>
+      ${howToPlay()}
       ${hasSupabase() ? '' : `<div class="warn">Local mode: no Supabase env vars, so only tabs in this browser can join. See README.</div>`}
     </section>
     <section class="lobby-right">
       <h2>The Brewers <span class="muted">(${g.players.length}/${MAX_SEATS})</span></h2>
       <div class="seats">${seats}${empty}</div>
       <div class="settings">
-        <label>Deploy timer
+        <label>Brew timer
           <select data-act="timer">
             ${[0, 45, 60, 90, 120, 180].map((s) => `<option value="${s}" ${g.settings.deployTimer === s ? 'selected' : ''}>${s ? s + 's' : 'off'}</option>`).join('')}
+          </select>
+        </label>
+        <label>Game length
+          <select data-act="rounds">
+            <option value="9" ${totalRounds(g) === 9 ? 'selected' : ''}>Full fair (9 nights)</option>
+            <option value="6" ${totalRounds(g) === 6 ? 'selected' : ''}>Quick fair (6 nights)</option>
           </select>
         </label>
         <button class="toggle ${g.settings.legacyVendor ? 'on' : ''}" data-act="toggle-vendor" ${vendorEligible ? '' : 'disabled'}>
@@ -270,6 +277,18 @@ function lobby(g: Game): string {
       ${canStart ? '' : '<div class="muted">Need at least 2 brewers (or 1 brewer + the Rival Peddler).</div>'}
     </section>
   </main>`;
+}
+
+function howToPlay(): string {
+  return `<details class="howto" open>
+    <summary>How to play</summary>
+    <ol>
+      <li><b>Stir in</b> ingredients from your satchel on your phone. Each one moves your cauldron up the Brew Track, where the rewards grow.</li>
+      <li>Watch the <b>☄️ Brimstone</b>. More than 7 and your cauldron goes <b>KABOOM</b>. <b>Cork it</b> before that, or use your <b>🥄 Ladle</b> to scoop out a bad draw.</li>
+      <li>At <b>judging</b>, score Silver 🪙 and Renown ★ for your space. Exploded? Pick one, not both.</li>
+      <li>Spend Silver at the <b>Herb Market</b> on better ingredients. Most Renown after the last night wins.</li>
+    </ol>
+  </details>`;
 }
 
 function laneStart(g: Game, p: Player): number {
@@ -375,7 +394,7 @@ function board(g: Game): string {
     const pending = g.players.filter((p) => p.pendingScoreChoice).map((p) => esc(p.name));
     controls = pending.length
       ? `<span class="muted">Waiting on exploded brewers: ${pending.join(', ')}</span>`
-      : `<button data-act="to-vendor">${g.round >= ROUNDS ? 'FINAL RESULTS ▶' : 'OPEN THE HERB MARKET ▶'}</button>`;
+      : `<button data-act="to-vendor">${g.round >= totalRounds(g) ? 'FINAL RESULTS ▶' : 'OPEN THE HERB MARKET ▶'}</button>`;
   }
   if (g.phase === 'vendor') {
     const shopping = g.players.filter((p) => !p.vendorDone).map((p) => esc(p.name));
